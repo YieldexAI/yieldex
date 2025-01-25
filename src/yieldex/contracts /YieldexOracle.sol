@@ -50,6 +50,26 @@ contract YieldexOracle {
     }
 
     /**
+     * @dev Update APY for multiple pools (called by backend)
+     * @param poolIds Array of pool identifiers
+     * @param apys Array of new APY values
+     */
+    function updateMultipleApys(
+        string[] calldata poolIds, 
+        uint256[] calldata apys
+    ) external onlyAdmin {
+        require(poolIds.length == apys.length, "Array length mismatch");
+        
+        for (uint i = 0; i < poolIds.length; i++) {
+            pools[poolIds[i]] = PoolData({
+                apy: apys[i],
+                timestamp: block.timestamp,
+                poolId: poolIds[i]
+            });
+        }
+    }
+
+    /**
      * @dev Get pool data
      * @param poolId Unique pool identifier
      * @return apy Current APY value

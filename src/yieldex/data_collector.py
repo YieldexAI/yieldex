@@ -6,7 +6,10 @@ import requests
 from supabase import create_client
 from web3 import Web3
 
-from src.yieldex.config import SUPABASE_KEY, SUPABASE_URL, MANTLE_RPC_URL, PRIVATE_KEY, ADMIN_ADDRESS, YIELDEX_ORACLE_ADDRESS, YIELDEX_ORACLE_ABI
+from src.yieldex.config import (MANTLE_RPC_URL, PRIVATE_KEY, SUPABASE_KEY,
+                                SUPABASE_URL, YIELDEX_ORACLE_ABI,
+                                YIELDEX_ORACLE_ADDRESS)
+from src.yieldex.protocol_fabric import YieldexOracleOperator
 
 from .analytics import analyze_apy_differences, get_recommendations
 from .notifications import TelegramNotifier, send_telegram_alert
@@ -40,30 +43,49 @@ def fetch_aave_pools() -> List[Dict]:
         return []
 
 def save_apy_data(pools: List[Dict]):
-    """Save historical APY data with timestamp"""
+    """
+    Save historical APY data with timestamp, then update multiple APYs in the
+    YieldexOracleOperator on Mantle with all records (ignoring
+    the chain name).
+    """
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     
     records = {}
     current_time = int(time.time())
     
+    # 1) Gather records
     for pool in pools:
         base_id = f"{pool['symbol']}_{pool['chain']}_{pool['project']}"
         pool_id = f"{base_id}_{pool['poolMeta']}" if pool.get('poolMeta') else base_id
         
-        # Use pool_id as key to ensure uniqueness
         records[pool_id] = {
             "pool_id": pool_id,
             "asset": pool['symbol'],
             "chain": pool['chain'],
             "apy": pool['apy'],
-            "timestamp": current_time  # Record data collection time
+            "timestamp": current_time
         }
     
-    # Convert dict values to list and insert
+    # 2) Write records to Supabase
     supabase.table('apy_history').upsert(
         list(records.values()),
         on_conflict='pool_id,timestamp'
     ).execute()
+    
+    # 3) Regardless of chain, update them all on Mantle
+
+    pool_ids = [r["pool_id"] for r in records.values()]
+    apys = [r["apy"] for r in records.values()]
+    
+    try:
+        oracle = YieldexOracleOperator("Mantle")
+        tx_hash = oracle.update_multiple_apys(pool_ids, apys)
+        if tx_hash:
+            logger.info(f"Mantle: Updated {len(pool_ids)} APYs in the Yieldex Oracle, tx hash={tx_hash}")
+        else:
+            logger.warning("Mantle: update_multiple_apys call returned None or failed")
+    except Exception as e:
+        logger.error(f"Error updating Mantle oracle: {str(e)}")
 
 def save_my_pool_balance(pool_id: str, balance: float):
     """Save or update balance of my funds in specific pool"""
@@ -103,18 +125,3 @@ if __name__ == "__main__":
                     logger.error("Failed to send Telegram notification")
     except Exception as e:
         logger.critical(f"Critical error: {str(e)}", exc_info=True)
-
-def update_mantle_oracle(pool_id: str, apy: float):
-    w3 = Web3(Web3.HTTPProvider(MANTLE_RPC_URL))
-    contract = w3.eth.contract(
-        address=YIELDEX_ORACLE_ADDRESS,
-        abi=YIELDEX_ORACLE_ABI
-    )
-    apy_scaled = int(apy * 100)  # Convert 5.25% → 525
-    
-    tx = contract.functions.updateApy(pool_id, apy_scaled).build_transaction({
-        'from': ADMIN_ADDRESS,
-        'nonce': w3.eth.get_transaction_count(ADMIN_ADDRESS)
-    })
-    signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
-    tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
