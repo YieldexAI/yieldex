@@ -4,27 +4,19 @@ from typing import Dict, List
 
 import requests
 from supabase import create_client
-from web3 import Web3
 
-from src.yieldex.config import (MANTLE_RPC_URL, PRIVATE_KEY, SUPABASE_KEY,
-                                SUPABASE_URL, YIELDEX_ORACLE_ABI,
-                                YIELDEX_ORACLE_ADDRESS)
-from src.yieldex.protocol_fabric import YieldexOracleOperator
-
-from .analytics import analyze_apy_differences, get_recommendations
-from .notifications import TelegramNotifier, send_telegram_alert
+from src.yieldex.config import SUPABASE_KEY, SUPABASE_URL
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configuration
-WHITE_LIST_PROTOCOLS = ['aave-v3', 'aave-v2', 'lendle']
-WHITE_LIST_TOKENS = ['USDT', 'USDC', 'DAI', 'GHO', 'AUSD']
-# SUPPORTED_CHAINS = ['Polygon', 'Arbitrum', 'Optimism', 'Base', 'Avalanche', 'Ethereum']
+WHITE_LIST_PROTOCOLS = ['aave-v3', 'aave-v2', 'lendle', 'venus-core-pool']
+WHITE_LIST_TOKENS = ['USDT', 'USDC', 'DAI', 'GHO', 'AUSD', 'TUSD', 'USD₮0', "FRAX", 'LUSD']
 
-def fetch_aave_pools() -> List[Dict]:
-    """Fetch AAVE v3 pools data from DeFiLlama API"""
+def fetch_pools() -> List[Dict]:
+    """Fetch pools data from DeFiLlama API"""
     try:
         response = requests.get("https://yields.llama.fi/pools")
         response.raise_for_status()
@@ -39,21 +31,16 @@ def fetch_aave_pools() -> List[Dict]:
 
         return filtered_pools
     except Exception as e:
-        logger.error(f"Error fetching AAVE pools: {e}")
+        logger.error(f"Error fetching pools: {e}")
         return []
 
 def save_apy_data(pools: List[Dict]):
-    """
-    Save historical APY data with timestamp, then update multiple APYs in the
-    YieldexOracleOperator on Mantle with all records (ignoring
-    the chain name).
-    """
+    """Save APY data to Supabase database"""
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     
     records = {}
     current_time = int(time.time())
     
-    # 1) Gather records
     for pool in pools:
         base_id = f"{pool['symbol']}_{pool['chain']}_{pool['project']}"
         pool_id = f"{base_id}_{pool['poolMeta']}" if pool.get('poolMeta') else base_id
@@ -63,65 +50,25 @@ def save_apy_data(pools: List[Dict]):
             "asset": pool['symbol'],
             "chain": pool['chain'],
             "apy": pool['apy'],
+            "tvl": pool['tvlUsd'],
             "timestamp": current_time
         }
     
-    # 2) Write records to Supabase
     supabase.table('apy_history').upsert(
         list(records.values()),
         on_conflict='pool_id,timestamp'
     ).execute()
-    
-    # 3) Regardless of chain, update them all on Mantle
+    logger.info(f"Saved {len(records)} APY records to database")
 
-    pool_ids = [r["pool_id"] for r in records.values()]
-    apys = [r["apy"] for r in records.values()]
-    
+def run_data_collection():
+    """Main data collection workflow"""
     try:
-        oracle = YieldexOracleOperator("Mantle")
-        tx_hash = oracle.update_multiple_apys(pool_ids, apys)
-        if tx_hash:
-            logger.info(f"Mantle: Updated {len(pool_ids)} APYs in the Yieldex Oracle, tx hash={tx_hash}")
-        else:
-            logger.warning("Mantle: update_multiple_apys call returned None or failed")
-    except Exception as e:
-        logger.error(f"Error updating Mantle oracle: {str(e)}")
-
-def save_my_pool_balance(pool_id: str, balance: float):
-    """Save or update balance of my funds in specific pool"""
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    
-    record = {
-        "pool_id": pool_id,
-        "balance": balance,  # My pool balance in USD
-        "timestamp": int(time.time())
-    }
-    
-    try:
-        response = supabase.table('pool_balances').upsert(
-            [record],
-            on_conflict='pool_id'  # Update existing record if exists
-        ).execute()
-        logger.info(f"Successfully updated balance for pool {pool_id}")
-        return True
-    except Exception as e:
-        logger.error(f"Error saving pool balance: {e}")
-        return False
-
-if __name__ == "__main__":
-    try:
-        pools = fetch_aave_pools()
+        pools = fetch_pools()
         if pools:
             save_apy_data(pools)
-            
-            # Get recommendations based on current positions
-            recommendations = get_recommendations(min_profit=0.7)  # Filter 0.7%
-            
-            if recommendations:
-                notifier = TelegramNotifier()
-                success = notifier.send_alert(recommendations)
-                
-                if not success:
-                    logger.error("Failed to send Telegram notification")
+        return pools
     except Exception as e:
-        logger.critical(f"Critical error: {str(e)}", exc_info=True)
+        logger.critical(f"Data collection failed: {str(e)}", exc_info=True)
+
+if __name__ == "__main__":
+    run_data_collection()
