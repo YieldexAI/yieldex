@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Dict, List
 from .config import SUPABASE_URL, SUPABASE_KEY
 from supabase import create_client
@@ -74,7 +75,7 @@ def get_recommendations(min_profit: float = 0.5) -> List[Dict]:
     for position in current_positions:
         current_pool = apy_map.get(position['pool_id'])
         if not current_pool:
-            logger.warning(f"No APY data for position {position['pool_id']}")
+            logging.warning(f"No APY data for position {position['pool_id']}")
             continue
             
         # Find best option for this asset considering gas
@@ -82,26 +83,38 @@ def get_recommendations(min_profit: float = 0.5) -> List[Dict]:
         max_profit = 0
         
         for pool in latest_apy:
-            if pool['asset'] == current_pool['asset'] and pool['pool_id'] != position['pool_id']:
-                # Use static gas values from config
-                gas_cost = GAS_COSTS.get(current_pool['chain'], 0) + GAS_COSTS.get(pool['chain'], 0)
+            if pool['asset'] != current_pool['asset'] and \
+               "aave-v3" in pool['pool_id'] and \
+               pool['chain'] == current_pool['chain']:
                 
-                profit = (pool['apy'] - current_pool['apy']) - gas_cost
+                # Use Uniswap V3 swap costs (0.3% fee + gas)
+                swap_cost = 0.3  # 0.3% pool fee
+                gas_cost = GAS_COSTS.get(current_pool['chain'], 0)
+                
+                effective_apy = pool['apy'] * (1 - swap_cost/100)
+                profit = effective_apy - current_pool['apy'] - gas_cost
                 
                 if profit > max_profit and profit > min_profit:
                     max_profit = profit
                     best_option = pool
+                    swap_details = {
+                        'from_token': current_pool['asset'],
+                        'to_token': pool['asset'],
+                        'swap_protocol': 'uniswap-v3'
+                    }
         
         if best_option:
             recommendations.append({
                 'asset': current_pool['asset'],
+                'to_asset': best_option['asset'],
                 'from_chain': current_pool['chain'],
                 'to_chain': best_option['chain'],
                 'current_apy': round(current_pool['apy'], 2),
                 'target_apy': round(best_option['apy'], 2),
                 'gas_cost': round(gas_cost, 2),
                 'estimated_profit': round(max_profit, 2),
-                'position_size': position['position_balance']
+                'position_size': position['position_balance'],
+                'swap_details': swap_details
             })
     
     # Sort by potential profit
@@ -242,3 +255,20 @@ def get_top_growing_asset(hours: int = 24) -> Dict:
                 })
     
     return sorted(results, key=lambda x: x['growth'], reverse=True)[0] if results else None 
+
+def get_chain_data(chain_name: str, limit: int = 100):
+    """Получить данные по конкретной цепи"""
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    
+    return supabase.table('apy_history') \
+        .select('asset, chain, apy, tvl, timestamp') \
+        .eq('chain', chain_name) \
+        .order('timestamp', desc=True) \
+        .order('apy', desc=True) \
+        .limit(limit) \
+        .execute().data
+
+
+if __name__ == "__main__":
+    # print(get_chain_data('Arbitrum')[:3])
+    print(get_recommendations())

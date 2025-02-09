@@ -10,10 +10,13 @@ from web3 import Web3
 from web3.contract import Contract
 from web3.types import TxParams
 
+from src.yieldex.analytics import get_recommendations
 from src.yieldex.config import (AAVE_V3_ADDRESSES, LENDLE_POOL_ADDRESS,
                                 MANTLE_RPC_URL, POLYGON_RPC_URL, PRIVATE_KEY,
-                                STABLECOINS, RPC_URLS, get_token_address)
-from src.yieldex.data_collector import save_my_pool_balance
+                                RPC_URLS, STABLECOINS, SUPABASE_URL, SUPABASE_KEY)
+# from src.yieldex.data_collector import save_my_pool_balance
+from src.yieldex.protocol_fabric import AaveOperator, UniswapV3Operator
+from src.yieldex.utils import get_token_address
 
 logger = logging.getLogger(__name__)
 ABI_DIR = Path(__file__).parent / "abi"
@@ -48,7 +51,9 @@ class ERC20Utils:
         }
         
         if self.network in ['Arbitrum', 'Optimism']:
-            base_params['gasPrice'] = self.w3.eth.gas_price
+            # Увеличиваем лимит газа для L2 сетей
+            gas_price = self.w3.eth.gas_price
+            base_params['gasPrice'] = int(gas_price * 1.2)  # +20% к текущей цене газа
         else:
             base_params['maxFeePerGas'] = self.w3.eth.gas_price
             base_params['maxPriorityFeePerGas'] = self.w3.to_wei(1, 'gwei')
@@ -59,7 +64,14 @@ class ERC20Utils:
         """Universal method for sending transactions"""
         try:
             tx_params = self._get_gas_params()
-            tx_params['gas'] = int(tx_function.estimate_gas(tx_params) * 1.2)
+            
+            # Увеличиваем лимит газа и добавляем доп. запас
+            try:
+                estimated_gas = tx_function.estimate_gas(tx_params)
+                tx_params['gas'] = int(estimated_gas * 1.5)  # +50% к оценке газа
+            except Exception as e:
+                logger.warning(f"Failed to estimate gas, using default: {str(e)}")
+                tx_params['gas'] = 2000000  # Устанавливаем безопасное значение по умолчанию
             
             signed_tx = self.account.sign_transaction(
                 tx_function.build_transaction(tx_params)
@@ -92,36 +104,44 @@ class ERC20Utils:
         decimals = token_contract.functions.decimals().call()
         balance_wei = token_contract.functions.balanceOf(self.account.address).call()
         return balance_wei / 10 ** decimals
+    
+def execute_uniswap_flow(recommendation: dict):
+    """Execute full swap flow using Uniswap V3"""
+    try:
+        chain = recommendation['from_chain']
+        asset = recommendation['asset']
+        amount = recommendation['position_size']
+        
+        logger.info(f"Starting Uniswap flow for {amount} {asset} on {chain}")
+        
+        # Инициализируем оператора и проверяем токен
+        aave_operator = AaveOperator(chain, 'aave-v3')
+        token_address = get_token_address(asset, chain)
+        
+        if not aave_operator._check_token_support(token_address):
+            raise ValueError(f"Token {asset} not supported in {chain} pool")
+            
+        # Выполняем вывод
+        withdraw_tx = aave_operator.withdraw(asset, amount)
+        logger.info(f"Withdrawal successful: {withdraw_tx}")
+        
+        return {'withdraw_tx': withdraw_tx}
+        
+    except Exception as e:
+        logger.error(f"Failed to execute Uniswap flow: {str(e)}")
+        raise
 
 
 if __name__ == "__main__":
-    # Iterate over all networks and stablecoins to check balances
-    try:
-        for network in RPC_URLS.keys():
-            print(f"--- Checking balances on {network} ---")
-            try:
-                operator = ERC20Utils(network)
-            except ConnectionError as ce:
-                print(f"Connection error for network {network}: {ce}")
-                continue
-            
-            for token, networks in STABLECOINS.items():
-                try:
-                    token_address = get_token_address(token, network)
-                except ValueError as e:
-                    print(f"{token} is not available on {network}: {e}")
-                    continue
-                
-                try:
-                    # Ensure address has correct checksum before fetching balance
-                    if not Web3.is_checksum_address(token_address):
-                        token_address = Web3.to_checksum_address(token_address)
-                    
-                    balance = operator.get_balance(token_address)
-                    print(f"{token} balance on {network}: {balance}")
-                except Exception as e:
-                    print(f"Failed to get balance for {token} on {network}: {e}")
-    except Exception as e:
-        print(f"Operation failed: {str(e)}")
+    recommendations = get_recommendations()
+    for recommendation in recommendations:
+        print(recommendation)
+        print(execute_uniswap_flow(recommendation))
+
+
+
+
+
+
 
 

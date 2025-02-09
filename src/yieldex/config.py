@@ -1,9 +1,46 @@
 import os
 from dotenv import load_dotenv
 import logging
+from web3 import Web3
 # from moccasin import NetworkConfig
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+# Validate required environment variables
+def validate_env_vars():
+    required_vars = {
+        'SUPABASE_URL': os.getenv('SUPABASE_URL'),
+        'SUPABASE_KEY': os.getenv('SUPABASE_KEY'),
+        'RPC_URLs': {
+            'Polygon': os.getenv('POLYGON_RPC_URL'),
+            'Mantle': os.getenv('MANTLE_RPC_URL'),
+            'Ethereum': os.getenv('ETHEREUM_RPC_URL'),
+            'Arbitrum': os.getenv('ARBITRUM_RPC_URL'),
+            'Optimism': os.getenv('OPTIMISM_RPC_URL'),
+            'Base': os.getenv('BASE_RPC_URL'),
+            'Avalanche': os.getenv('AVALANCHE_RPC_URL')
+        }
+    }
+
+    missing_vars = []
+    for var, value in required_vars.items():
+        if isinstance(value, dict):
+            for sub_var, sub_value in value.items():
+                if not sub_value:
+                    missing_vars.append(f"{var}[{sub_var}]")
+        elif not value:
+            missing_vars.append(var)
+
+    if missing_vars:
+        logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
+        return False
+    return True
+
+# Load and validate configuration
+if not validate_env_vars():
+    logger.warning("Required environment variables not properly configured!")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "your-url")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "your-key")
@@ -33,13 +70,16 @@ RPC_URLS = {
 if not all([POLYGON_RPC_URL, MANTLE_RPC_URL]):
     logging.warning("Required RPC URLs not properly configured!")
 
-logger = logging.getLogger(__name__)
 logger.info(f"Telegram Bot Token: {TELEGRAM_BOT_TOKEN}")
 logger.info(f"Telegram Chat ID: {TELEGRAM_CHAT_ID}")
 logger.info(f"Telegram Thread ID: {TELEGRAM_THREAD_ID}")
 
 # Configuration of addresses for all supported stablecoins
 STABLECOINS = {
+
+    'USD₮0': {
+        'Arbitrum': '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
+    },
     'USDT': {
         'Polygon': '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
         'Arbitrum': '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
@@ -81,6 +121,12 @@ STABLECOINS = {
         'Base': None,
         'Avalanche': None,
         'Ethereum': None
+    },
+    'FRAX': {
+        'Polygon': '0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89',
+        'Arbitrum': '0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F',
+        'Ethereum': '0x853d955aCEf822Db058eb8505911ED77F175b99e',
+        'Mantle': '0x7EAdA816Fd377ab6a0e8bB6B1c8d042aA4984E1C'
     }
 }
 
@@ -115,20 +161,46 @@ AAVE_V2_ADDRESSES = {
 
 YIELDEX_ORACLE_ADDRESS = {'Mantle': '0xe325591Ba3e44ee4a0f8D8e4c18c7C474e256C0c'}
 
+CURVE_POOLS = {
+    'USDT_FRAX': {
+        'Polygon': '0xBea9F78090bDB9e662d8CB301A00ad09A5b756e9',
+        'Ethereum': '0x0fCDAeDFb8D7EfD2525Eb653BDa49F7D03B5c5Ae'
+    }
+}
+
+UNISWAP_V3_ROUTER = {
+    'Ethereum': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+    'Polygon': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+    'Arbitrum': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+    'Optimism': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+    'Base': '0x2626664c2603336E57B271c5C9b86f4DfA5ecA44'
+}
+
 SUPPORTED_PROTOCOLS = {
     'aave-v3': AAVE_V3_ADDRESSES,
     'aave-v2': AAVE_V2_ADDRESSES,
     'lendle': LENDLE_POOL_ADDRESS,
-    'yieldex-oracle': YIELDEX_ORACLE_ADDRESS
+    'yieldex-oracle': YIELDEX_ORACLE_ADDRESS,
+    'curve': CURVE_POOLS,
+    'uniswap-v3': UNISWAP_V3_ROUTER
 }
 
-def get_token_address(token: str, chain: str) -> str:
-    """Safe retrieval of token address"""
-    address = STABLECOINS.get(token.upper(), {}).get(chain)
-    if not address:
-        raise ValueError(f"Token {token} not supported on {chain}")
-    return address
-
-
-
 YIELDEX_ORACLE_ABI = 'YieldexOracle.sol'
+
+def validate_rpc_connection():
+    """Validate RPC connections"""
+    for chain, url in RPC_URLS.items():
+        try:
+            w3 = Web3(Web3.HTTPProvider(url))
+            if not w3.is_connected():
+                logger.error(f"Failed to connect to {chain} RPC")
+            else:
+                logger.info(f"Successfully connected to {chain}")
+        except Exception as e:
+            logger.error(f"Error connecting to {chain} RPC: {str(e)}")
+
+# Add validation call
+if not validate_env_vars():
+    logger.warning("Required environment variables not properly configured!")
+else:
+    validate_rpc_connection()
