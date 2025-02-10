@@ -8,6 +8,41 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+# Block explorers configuration
+BLOCK_EXPLORERS = {
+    'Arbitrum': 'https://arbiscan.io',
+    'Polygon': 'https://polygonscan.com', 
+    'Optimism': 'https://optimistic.etherscan.io',
+    'Mantle': 'https://explorer.mantle.xyz',
+    'Base': 'https://basescan.org',
+    'Ethereum': 'https://etherscan.io',
+    'Avalanche': 'https://snowtrace.io'
+}
+
+# RPC URLs for different networks
+RPC_URLS = {
+    'Polygon': os.getenv('POLYGON_RPC_URL'),
+    'Mantle': os.getenv('MANTLE_RPC_URL'),
+    'Ethereum': os.getenv("ETHEREUM_RPC_URL"),
+    'Arbitrum': os.getenv("ARBITRUM_RPC_URL"),
+    'Optimism': os.getenv("OPTIMISM_RPC_URL"),
+    'Base': os.getenv("BASE_RPC_URL"),
+    'Avalanche': os.getenv("AVALANCHE_RPC_URL")
+}
+
+
+def validate_rpc_connection():
+    """Validate RPC connections"""
+    for chain, url in RPC_URLS.items():
+        try:
+            w3 = Web3(Web3.HTTPProvider(url))
+            if not w3.is_connected():
+                logger.error(f"Failed to connect to {chain} RPC")
+            else:
+                logger.info(f"Successfully connected to {chain}")
+        except Exception as e:
+            logger.error(f"Error connecting to {chain} RPC: {str(e)}")
+
 # Validate required environment variables
 def validate_env_vars():
     required_vars = {
@@ -41,6 +76,8 @@ def validate_env_vars():
 # Load and validate configuration
 if not validate_env_vars():
     logger.warning("Required environment variables not properly configured!")
+else:
+    validate_rpc_connection()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "your-url")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "your-key")
@@ -55,16 +92,7 @@ TELEGRAM_THREAD_ID = os.getenv("TELEGRAM_THREAD_ID", "")
 if not all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID]):
     logging.warning("Telegram credentials not properly configured!")
 
-# RPC URLs for different networks
-RPC_URLS = {
-    'Polygon': POLYGON_RPC_URL,
-    'Mantle': MANTLE_RPC_URL,
-    'Ethereum': os.getenv("ETHEREUM_RPC_URL"),
-    'Arbitrum': os.getenv("ARBITRUM_RPC_URL"),
-    'Optimism': os.getenv("OPTIMISM_RPC_URL"),
-    'Base': os.getenv("BASE_RPC_URL"),
-    'Avalanche': os.getenv("AVALANCHE_RPC_URL")
-}
+
 
 # Add validation for required RPCs
 if not all([POLYGON_RPC_URL, MANTLE_RPC_URL]):
@@ -91,7 +119,7 @@ STABLECOINS = {
     },
     'USDC': {
         'Polygon': '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-        'Arbitrum': '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8a',
+        'Arbitrum': '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
         'Optimism': '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
         'Base': '0x833589fCD6eDb6E08B4DF7441424273dE8F059F7',
         'Avalanche': '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
@@ -176,6 +204,13 @@ UNISWAP_V3_ROUTER = {
     'Base': '0x2626664c2603336E57B271c5C9b86f4DfA5ecA44'
 }
 
+UNISWAP_CONTRACTS = {
+    'Arbitrum': {
+        'router': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+        'quoter': '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6'
+    }
+}
+
 SUPPORTED_PROTOCOLS = {
     'aave-v3': AAVE_V3_ADDRESSES,
     'aave-v2': AAVE_V2_ADDRESSES,
@@ -187,20 +222,4 @@ SUPPORTED_PROTOCOLS = {
 
 YIELDEX_ORACLE_ABI = 'YieldexOracle.sol'
 
-def validate_rpc_connection():
-    """Validate RPC connections"""
-    for chain, url in RPC_URLS.items():
-        try:
-            w3 = Web3(Web3.HTTPProvider(url))
-            if not w3.is_connected():
-                logger.error(f"Failed to connect to {chain} RPC")
-            else:
-                logger.info(f"Successfully connected to {chain}")
-        except Exception as e:
-            logger.error(f"Error connecting to {chain} RPC: {str(e)}")
 
-# Add validation call
-if not validate_env_vars():
-    logger.warning("Required environment variables not properly configured!")
-else:
-    validate_rpc_connection()

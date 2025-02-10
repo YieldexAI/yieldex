@@ -46,9 +46,6 @@ logger.propagate = False
 WHITE_LIST_PROTOCOLS = os.getenv('WHITE_LIST_PROTOCOLS', 'aave-v3,aave-v2,lendle,venus-core-pool').split(',')
 WHITE_LIST_TOKENS = os.getenv('WHITE_LIST_TOKENS', 'USDT,USDC,DAI,GHO,AUSD,TUSD,USD₮0,FRAX,LUSD').split(',')
 
-logger.info(f"Starting data collector with protocols: {WHITE_LIST_PROTOCOLS}")
-logger.info(f"Monitoring tokens: {WHITE_LIST_TOKENS}")
-
 def fetch_pools() -> List[Dict]:
     """Fetch pools data from DeFiLlama API"""
     try:
@@ -113,7 +110,9 @@ def save_apy_data(pools: List[Dict]):
 
 def run_data_collection():
     """Main data collection workflow"""
-    logger.info("Starting data collection cycle...")
+    logger.info(f"Starting data collector with protocols: {WHITE_LIST_PROTOCOLS}")
+    logger.info(f"Monitoring tokens: {WHITE_LIST_TOKENS}")
+    
     try:
         # Проверяем конфигурацию перед запуском
         if not validate_env_vars():

@@ -3,7 +3,7 @@ from .config import STABLECOINS
 
 def get_token_address(token: str, chain: str) -> str:
     """Safe retrieval of token address"""
-    # Добавляем маппинг для USD₮0 -> USDT
+    # Add mapping for USD₮0 -> USDT
     if token.upper() == 'USD₮0':
         token = 'USDT'
     
@@ -11,7 +11,7 @@ def get_token_address(token: str, chain: str) -> str:
     if not address:
         raise ValueError(f"Token {token} not supported on {chain}")
     
-    # Проверяем формат адреса
+    # Check address format
     try:
         return Web3.to_checksum_address(address)
     except ValueError as e:

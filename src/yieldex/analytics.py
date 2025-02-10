@@ -257,7 +257,7 @@ def get_top_growing_asset(hours: int = 24) -> Dict:
     return sorted(results, key=lambda x: x['growth'], reverse=True)[0] if results else None 
 
 def get_chain_data(chain_name: str, limit: int = 100):
-    """Получить данные по конкретной цепи"""
+    """Get data for specific chain"""
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     
     return supabase.table('apy_history') \

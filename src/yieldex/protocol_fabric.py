@@ -6,9 +6,16 @@ from web3 import Web3
 from web3.contract import Contract
 from .utils import get_token_address
 
-from .config import PRIVATE_KEY, RPC_URLS, STABLECOINS, SUPPORTED_PROTOCOLS, YIELDEX_ORACLE_ADDRESS
+from .config import (PRIVATE_KEY, RPC_URLS, STABLECOINS, 
+                    SUPPORTED_PROTOCOLS, BLOCK_EXPLORERS, YIELDEX_ORACLE_ADDRESS)
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
+
 ABI_DIR = Path(__file__).parent / "abi"
 
 class BaseProtocolOperator:
@@ -25,6 +32,7 @@ class BaseProtocolOperator:
         self.contract_address = SUPPORTED_PROTOCOLS[protocol][network]
         self.contract = self._load_contract()
         self.account = self.w3.eth.account.from_key(PRIVATE_KEY)
+        self.explorer_url = BLOCK_EXPLORERS.get(self.network)
         
     def _load_contract(self) -> Contract:
         """Load ABI based on protocol"""
@@ -48,19 +56,19 @@ class BaseProtocolOperator:
             with open(abi_path) as f:
                 abi = json.load(f)
             
-            # Проверяем адрес контракта
+            # Check if contract address is valid
             if not Web3.is_checksum_address(self.contract_address):
                 self.contract_address = Web3.to_checksum_address(self.contract_address)
             
-            # Создаем контракт
+            # Create contract
             contract = self.w3.eth.contract(
                 address=self.contract_address,
                 abi=abi
             )
             
-            # Проверяем, что контракт доступен
+            # Check if contract is accessible
             try:
-                # Пробуем вызвать какой-нибудь view метод
+                # Try calling a view method
                 if self.protocol in ['aave-v3', 'aave-v2', 'lendle']:
                     contract.functions.getReserveData(
                         self.w3.to_checksum_address(
@@ -85,11 +93,11 @@ class BaseProtocolOperator:
             'chainId': self.w3.eth.chain_id
         }
 
-        # Для L2 сетей используем gasPrice
+        # For L2 networks use gasPrice
         if self.network in ['Arbitrum', 'Optimism', 'Mantle']:
             base_params['gasPrice'] = self.w3.eth.gas_price
         else:
-            # Для EVM-сетей используем EIP-1559 с базовыми параметрами
+            # For EVM-networks use EIP-1559 with base parameters
             try:
                 latest_block = self.w3.eth.get_block('latest')
                 base_fee = latest_block['baseFeePerGas']
@@ -103,26 +111,28 @@ class BaseProtocolOperator:
         return base_params
 
     def _send_transaction(self, tx_function) -> str:
-        """Simplified transaction sending from old version"""
+        """Universal method for sending transactions"""
         try:
             tx_params = self._get_gas_params()
             
-            # Базовая оценка газа с фиксированным множителем
+            # Base gas estimation with fixed multiplier
             estimated_gas = tx_function.estimate_gas(tx_params)
-            tx_params['gas'] = int(estimated_gas * 1.2)  # 20% buffer
+            tx_params['gas'] = int(estimated_gas * 1.3)  # 30% buffer
             
             signed_tx = self.account.sign_transaction(
                 tx_function.build_transaction(tx_params)
             )
             
             tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-            receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+            receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
             
             if receipt.status != 1:
-                logger.error(f"Transaction reverted: {receipt.transactionHash.hex()}")
-                raise Exception("Transaction failed")
+                raise Exception("Transaction reverted")
                 
-            return tx_hash.hex()
+            tx_hash_hex = tx_hash.hex()
+            logger.info(f"Transaction successful: {tx_hash_hex}")
+            
+            return f'{self.explorer_url}/tx/0x{tx_hash_hex}'
             
         except Exception as e:
             logger.error(f"Transaction failed: {str(e)}")
@@ -136,11 +146,11 @@ class BaseProtocolOperator:
                 'chainId': self.w3.eth.chain_id,
             }
             
-            # Специальная обработка для Arbitrum
+            # Special handling for Arbitrum
             if self.network == 'Arbitrum':
                 gas_price = self.w3.eth.gas_price
-                params['gasPrice'] = int(gas_price * 1.2)  # +20% к базовой цене газа
-                params['gas'] = 3000000  # Увеличенный лимит газа для Arbitrum
+                params['gasPrice'] = int(gas_price * 1.2)  # +20% to base gas price
+                params['gas'] = 3000000  # Increased gas limit for Arbitrum
             else:
                 gas_estimate = function.estimate_gas(params)
                 params['gas'] = int(gas_estimate * 1.5)
@@ -169,8 +179,8 @@ class BaseProtocolOperator:
             erc20 = self.w3.eth.contract(address=token_address, abi=abi)
             
             try:
-                # Используем _call_contract для decimals
-                decimals = self._call_contract(erc20.functions.decimals())
+                # Use _call_contract for decimals
+                decimals = erc20.functions.decimals().call()
                 logger.info(f"Got decimals for {token_address}: {decimals}")
             except Exception as e:
                 logger.warning(f"Failed to get decimals, using default (18): {str(e)}")
@@ -185,7 +195,7 @@ class BaseProtocolOperator:
     def _check_token_support(self, token_address: str) -> bool:
         """Check if token is supported in the pool"""
         try:
-            # Используем _call_contract вместо прямого call
+            # Use _call_contract instead of direct call
             reserve_data = self._call_contract(
                 self.contract.functions.getReserveData(token_address)
             )
@@ -213,6 +223,38 @@ class AaveOperator(BaseProtocolOperator):
         token_address = STABLECOINS[token][self.network]
         amount_wei = self._convert_to_wei(token_address, amount)
         
+        # Create token contract
+        with open(ABI_DIR / 'ERC20.json') as f:
+            token_contract = self.w3.eth.contract(
+                address=token_address,
+                abi=json.load(f)
+            )
+        
+        # Get and log balance
+        decimals = token_contract.functions.decimals().call()
+        balance = token_contract.functions.balanceOf(self.account.address).call()
+        balance_human = balance / 10**decimals
+        
+        logger.info(f"Current balance: {balance_human} {token}")
+        logger.info(f"Attempting to supply: {amount} {token}")
+        
+        if balance < amount_wei:
+            raise ValueError(f"Insufficient balance: have {balance_human}, need {amount} {token}")
+        
+        # Rest of the supply logic...
+        allowance = token_contract.functions.allowance(
+            self.account.address,
+            self.contract_address
+        ).call()
+        
+        if allowance < amount_wei:
+            approve_tx = token_contract.functions.approve(
+                self.contract_address,
+                amount_wei
+            )
+            logger.info(f"Approving {token} for Aave V3")
+            self._send_transaction(approve_tx)
+        
         if self.protocol == 'aave-v3':
             tx_func = self.contract.functions.supply(
                 token_address,
@@ -235,41 +277,44 @@ class AaveOperator(BaseProtocolOperator):
         try:
             token_address = get_token_address(token, self.network)
             
-            # Проверяем поддержку токена в пуле
+            # Check token support in pool
             logger.info(f"Checking if token {token} ({token_address}) is supported in {self.network} pool")
             reserve_data = self.contract.functions.getReserveData(token_address).call()
             
-            # Проверяем конфигурацию резерва
+            # Check reserve configuration
             configuration = reserve_data[0]
             is_active = (configuration >> 56) & 1
             is_frozen = (configuration >> 57) & 1
-            atoken_address = reserve_data[7]
             
             if not is_active:
                 raise ValueError(f"Token {token} is not active in the pool")
             if is_frozen:
                 raise ValueError(f"Token {token} is frozen in the pool")
-            if not Web3.is_address(atoken_address) or atoken_address in ['0x0000000000000000000000000000000000000000', '0x0000000000000000000000000000000000000005']:
-                raise ValueError(f"Token {token} is not supported in {self.network} pool (invalid aToken address: {atoken_address})")
                 
-            logger.info(f"Token {token} is supported in {self.network} pool, aToken: {atoken_address}")
+            atoken_address = reserve_data[8]
+            if not Web3.is_address(atoken_address) or atoken_address == '0x0000000000000000000000000000000000000000':
+                raise ValueError(f"Invalid aToken address for {token}: {atoken_address}")
+                
+            logger.info(f"Token is supported, aToken address: {atoken_address}")
             
-            amount_wei = self._convert_to_wei(token_address, amount)
-            
-            # Создаем контракт aToken и получаем баланс
+                
+            # Create aToken contract and get balance
             atoken_contract = self.w3.eth.contract(
                 address=atoken_address,
                 abi=json.load(open(ABI_DIR / 'ERC20.json'))
             )
             
+            # Use direct call() as in get_balance
             decimals = atoken_contract.functions.decimals().call()
             balance = atoken_contract.functions.balanceOf(self.account.address).call()
             logger.info(f"Current balance: {balance/10**decimals} {token}")
+
+            amount_wei = self._convert_to_wei(token_address, amount)
             
             if balance < amount_wei:
-                raise ValueError(f"Insufficient balance: have {balance/10**decimals}, need {amount_wei/10**decimals}")
+                raise ValueError(f"Insufficient balance: have {balance / 10 ** decimals}, need {amount_wei / 10 ** decimals}")
             
-            # Выполняем вывод средств
+            # Execute withdrawal
             tx_func = self.contract.functions.withdraw(
                 token_address,
                 amount_wei,
@@ -319,7 +364,7 @@ class YieldexOracleOperator(BaseProtocolOperator):
     def update_apy(self, pool_id: str, apy: float) -> Optional[str]:
         """Update APY in the oracle contract"""
         try:
-            # Конвертация в формат контракта (2 знака после запятой)
+            # Conversion to contract format (2 decimal places)
             apy_scaled = int(apy * 100)
             
             tx_func = self.contract.functions.updateApy(
@@ -346,7 +391,7 @@ class YieldexOracleOperator(BaseProtocolOperator):
 
     def get_apy(self, pool_id: str) -> Optional[float]:
         try:
-            # Явное кодирование строки и распаковка значений
+            # Explicit string encoding and unpacking values
             apy_scaled, timestamp = self.contract.functions.getApy(
                 pool_id
             ).call()
@@ -421,97 +466,179 @@ class CurveOperator(BaseProtocolOperator):
 class UniswapV3Operator(BaseProtocolOperator):
     """Class for working with Uniswap V3 swaps"""
     
-    def __init__(self, network: str):
-        super().__init__(network, 'uniswap-v3')
-        
-    def _send_transaction(self, tx_params: Dict) -> str:
-        """Send transaction with given parameters"""
+    # Add dictionary with Quoter contract addresses
+    QUOTER_ADDRESSES = {
+        'Arbitrum': '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6',
+        'Optimism': '0x7637DcE4704b41Bf52BF338C650Dc46A586f7cF38',
+    }
+    
+    # Available fee tiers in Uniswap V3
+    FEE_TIERS = {
+        100: '0064',  # 0.01%
+        500: '01f4',  # 0.05%
+        3000: '0bb8', # 0.3%
+        10000: '2710' # 1%
+    }
+
+    def _get_token_decimals(self, token_address: str) -> int:
+        """Get token decimals using existing ERC20 contract"""
+        with open(ABI_DIR / 'ERC20.json') as f:
+            erc20 = self.w3.eth.contract(
+                address=token_address,
+                abi=json.load(f)
+            )
+        return erc20.functions.decimals().call()
+
+    def _get_optimal_fee_tier(self, token_in: str, token_out: str) -> str:
+        """
+        Determine optimal fee tier for token pair based on liquidity
+        Returns hex representation of fee tier
+        """
         try:
-            # Если передан готовый словарь с параметрами
-            if isinstance(tx_params, dict):
-                # Добавляем gas если его нет
-                if 'gas' not in tx_params:
-                    tx_params['gas'] = int(self.w3.eth.estimate_gas(tx_params) * 1.2)
-                
-                signed_tx = self.account.sign_transaction(tx_params)
-            else:
-                # Если передана функция контракта
-                gas_params = self._get_gas_params()
-                gas_params['gas'] = int(tx_params.estimate_gas(gas_params) * 1.2)
-                signed_tx = self.account.sign_transaction(
-                    tx_params.build_transaction(gas_params)
-                )
+            # Here you can add logic to determine the optimal fee tier
+            # based on liquidity in pools or other metrics
+            return self.FEE_TIERS[500]  # Return default 0.05%
+        except Exception as e:
+            logger.warning(f"Failed to get optimal fee tier: {e}. Using default 0.05%")
+            return self.FEE_TIERS[500]
+
+    def _validate_token_address(self, token_address: str) -> str:
+        """Validate and return checksum address"""
+        if not Web3.is_address(token_address):
+            raise ValueError(f"Invalid token address: {token_address}")
+        return Web3.to_checksum_address(token_address)
+
+    def _get_quote(self, token_in_addr: str, token_out_addr: str, amount_wei: int, fee_tier: Optional[str] = None) -> int:
+        """
+        Get quote for swap from Uniswap V3 Quoter contract
+        
+        Args:
+            token_in: Input token address
+            token_out: Output token address
+            amount_wei: Amount in wei to swap
+            fee_tier: Optional fee tier, if None will use optimal
+        
+        Returns:
+            int: Expected output amount in wei
+        """
+        try:
+            # Get quoter contract
+            quoter_address = self.QUOTER_ADDRESSES.get(self.network)
+            if not quoter_address:
+                raise ValueError(f"Quoter address not configured for network {self.network}")
+
+            quoter_abi = json.load(open(ABI_DIR / 'UniswapV3Quoter.json'))
+            quoter = self.w3.eth.contract(address=quoter_address, abi=quoter_abi)
             
-            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-            receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+            # Get fee tier if not provided
+            if not fee_tier:
+                fee_tier = self._get_optimal_fee_tier(token_in_addr, token_out_addr)
             
-            if receipt.status != 1:
-                raise Exception(f"Transaction reverted: {receipt.transactionHash.hex()}")
+            # Build path
+            print(fee_tier)
+            path = self._build_path(token_in_addr, token_out_addr, fee_tier)
+            logger.info(f"Quote path: {path.hex()}")
             
-            return tx_hash.hex()
+            # Get decimals for output formatting
+            decimals_out = self._get_token_decimals(token_out_addr)
+            
+            # Get quote
+            quote_amount = quoter.functions.quoteExactInput(
+                path,
+                amount_wei
+            ).call()
+            
+            logger.info(f"Quote successful: {quote_amount / 10**decimals_out} tokens")
+            return quote_amount
             
         except Exception as e:
-            logger.error(f"Transaction failed: {str(e)}")
+            logger.error(f"Failed to get quote: {str(e)}")
             raise
 
     def swap(self, token_in: str, token_out: str, amount_in: float, slippage: float = 0.5) -> str:
         """Execute swap using Uniswap V3 Router"""
         try:
-            # Get token addresses
-            token_in_addr = get_token_address(token_in, self.network)
-            token_out_addr = get_token_address(token_out, self.network)
+            # Validate addresses
+            token_in_addr = self._validate_token_address(get_token_address(token_in, self.network))
+            token_out_addr = self._validate_token_address(get_token_address(token_out, self.network))
+
+            logger.info(f"Tokens: {token_in} -> {token_out} ({token_in_addr} -> {token_out_addr})")
             
-            # Get token contract
-            with open(ABI_DIR / 'ERC20.json') as f:
-                erc20_abi = json.load(f)
+            # Get decimals
+            decimals_in = self._get_token_decimals(token_in_addr)
+            decimals_out = self._get_token_decimals(token_out_addr)
             
-            token_contract = self.w3.eth.contract(
-                address=token_in_addr,
-                abi=erc20_abi
-            )
+            # Convert amount to wei
+            amount_wei = self._convert_to_wei(token_in_addr, amount_in)
             
-            # Get decimals and calculate amount
-            decimals = token_contract.functions.decimals().call()
-            amount_wei = int(amount_in * 10 ** decimals)
+            # Handle approvals
+            self._handle_token_approval(token_in_addr, amount_wei)
             
-            # Check and approve if needed
-            allowance = token_contract.functions.allowance(
-                self.account.address,
-                self.contract_address
-            ).call()
+            # Get optimal fee tier
+            fee_tier = self._get_optimal_fee_tier(token_in, token_out)
             
-            if allowance < amount_wei:
-                logger.info(f"Approving {token_in} for Uniswap V3")
-                # Используем функцию контракта для approve
-                approve_func = token_contract.functions.approve(
-                    self.contract_address,
-                    amount_wei
-                )
-                tx_hash = self._send_transaction(approve_func)
-                logger.info(f"Approval transaction: {tx_hash}")
+            # Get quote and calculate minimum output
+            try:
+                quote_amount = self._get_quote(token_in_addr, token_out_addr, amount_wei, fee_tier)
+                min_amount_out = int(quote_amount * (1 - slippage/100))
+            except Exception as e:
+                logger.warning(f"Using fallback slippage calculation: {str(e)}")
+                min_amount_out = int(amount_wei * 0.95)  # 5% slippage as fallback
             
-            # Build swap params
-            path = bytes.fromhex(
-                f"{token_in_addr[2:]}000bb8{token_out_addr[2:]}"
-            )  # 0.3% fee tier
+            # Build path and execute swap
+            path = self._build_path(token_in_addr, token_out_addr, fee_tier)
             
+            # Execute swap
             deadline = self.w3.eth.get_block('latest')['timestamp'] + 600
-            
             params = {
                 'path': path,
                 'recipient': self.account.address,
                 'deadline': deadline,
                 'amountIn': amount_wei,
-                'amountOutMinimum': int(amount_wei * (1 - slippage/100))
+                'amountOutMinimum': min_amount_out
             }
             
-            # Execute swap using contract function
             swap_func = self.contract.functions.exactInput(params)
             return self._send_transaction(swap_func)
             
         except Exception as e:
             logger.error(f"Swap failed: {str(e)}")
             raise
+
+    def _handle_token_approval(self, token_address: str, amount: int) -> None:
+        """Handle token approval for Uniswap"""
+        with open(ABI_DIR / 'ERC20.json') as f:
+            token_contract = self.w3.eth.contract(
+                address=token_address,
+                abi=json.load(f)
+            )
+        
+        allowance = token_contract.functions.allowance(
+            self.account.address,
+            self.contract_address
+        ).call()
+        
+        if allowance < amount:
+            logger.info(f"Approving token {token_address}")
+            approve_func = token_contract.functions.approve(
+                self.contract_address,
+                amount
+            )
+            tx_hash = self._send_transaction(approve_func)
+            logger.info(f"Approval transaction: {tx_hash}")
+
+    def _build_path(self, token_in: str, token_out: str, fee_tier: str) -> bytes:
+        """Build path for Uniswap swap"""
+        # Remove '0x' prefix if present and ensure addresses are 20 bytes (40 hex chars)
+        token_in_clean = token_in[2:].zfill(40) if token_in.startswith('0x') else token_in.zfill(40)
+        token_out_clean = token_out[2:].zfill(40) if token_out.startswith('0x') else token_out.zfill(40)
+        
+        # Ensure fee tier is 3 bytes (6 hex chars)
+        fee_hex = fee_tier.zfill(6)
+        
+        # Concatenate and convert to bytes
+        path_hex = f"{token_in_clean}{fee_hex}{token_out_clean}"
+        return bytes.fromhex(path_hex)
 
 def get_protocol_operator(network: str, protocol: str):
     """Factory for getting protocol operator"""
