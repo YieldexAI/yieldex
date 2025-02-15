@@ -2,7 +2,7 @@ import asyncio
 import logging
 from telegram import Bot
 from telegram.error import TelegramError
-from .config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_THREAD_ID
+from ..yieldex.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_THREAD_ID
 from .notifications import TelegramNotifier
 
 # Configure logging

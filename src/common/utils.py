@@ -1,5 +1,5 @@
 from web3 import Web3
-from .config import STABLECOINS
+from ..yieldex.config import STABLECOINS
 
 def get_token_address(token: str, chain: str) -> str:
     """Safe retrieval of token address"""

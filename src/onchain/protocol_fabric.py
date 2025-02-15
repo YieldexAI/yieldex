@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Any, Dict, Optional, List
 from web3 import Web3
 from web3.contract import Contract
-from .utils import get_token_address
+from ..common.utils import get_token_address
 
-from .config import (PRIVATE_KEY, RPC_URLS, STABLECOINS, 
+from ..yieldex.config import (PRIVATE_KEY, RPC_URLS, STABLECOINS, 
                     SUPPORTED_PROTOCOLS, BLOCK_EXPLORERS, YIELDEX_ORACLE_ADDRESS)
 
 # Configure logging

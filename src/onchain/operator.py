@@ -16,8 +16,8 @@ from src.yieldex.config import (AAVE_V3_ADDRESSES, LENDLE_POOL_ADDRESS,
                                 RPC_URLS, STABLECOINS, SUPABASE_KEY,
                                 SUPABASE_URL)
 # from src.yieldex.data_collector import save_my_pool_balance
-from src.yieldex.protocol_fabric import AaveOperator, UniswapV3Operator
-from src.yieldex.utils import get_token_address
+from onchain.protocol_fabric import AaveOperator, UniswapV3Operator
+from common.utils import get_token_address
 
 logger = logging.getLogger(__name__)
 ABI_DIR = Path(__file__).parent / "abi"

@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Сервис сбора данных о доходности протоколов
+  data-collector:
+    build:
+      context: .
+      dockerfile: Dockerfile-data-collector
+    container_name: data-collector
+    environment:
+      # Обязательные переменные
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      # Опциональные переменные с значениями по умолчанию
+      - WHITE_LIST_PROTOCOLS=${WHITE_LIST_PROTOCOLS:-aave-v3,aave-v2,lendle,venus-core-pool}
+      - WHITE_LIST_TOKENS=${WHITE_LIST_TOKENS:-USDT,USDC,DAI,GHO,AUSD,TUSD,USD₮0,FRAX,LUSD}
+    volumes:
+      # Монтирование директорий для сохранения данных
+      - ./logs:/app/logs
+      - ./config:/app/config
+      - ./src/common/abi:/app/abi    # Монтируем ABI файлы
+    restart: unless-stopped
+    # Используем cron вместо прямого запуска
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      apt-get update && apt-get install -y cron
+      echo "*/30 * * * * cd /app && python -u -m data_collector.collector >> /app/logs/cron.log 2>&1" > /etc/cron.d/collector
+      chmod 0644 /etc/cron.d/collector
+      crontab /etc/cron.d/collector
+      cron -f
+    healthcheck:
+      test: ["CMD", "python", "-c", "from data_collector.collector import fetch_pools; assert fetch_pools()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  data-collector-test:
+    build:
+      context: .
+      dockerfile: Dockerfile-data-collector
+    environment:
+      - SUPABASE_URL=test
+      - SUPABASE_KEY=test
+      - POLYGON_RPC_URL=test
+      - ETHEREUM_RPC_URL=test
+    command: ["pytest"] 

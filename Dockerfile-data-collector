@@ -1,0 +1,45 @@
+# Use slim Python image for minimal size
+FROM python:3.11-slim
+
+# Add metadata
+LABEL maintainer="exectrogod@gmail.com"
+LABEL description="Data collector service for Yieldex"
+LABEL version="1.0"
+
+# Install cron
+RUN apt-get update && apt-get install -y cron
+
+# Set working directory
+WORKDIR /app
+
+# Create required directories
+RUN mkdir -p /app/logs /app/config /app/abi
+
+# Copy only required files
+COPY requirements-data-collector.txt requirements.txt
+COPY src/common/__init__.py src/common/__init__.py
+COPY src/common/config.py src/common/config.py
+COPY src/data_collector/ src/data_collector/
+
+# Copy ABI files
+COPY src/common/abi/ /app/abi/
+
+# Add src directory to PYTHONPATH
+ENV PYTHONPATH=/app/src
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create volumes
+VOLUME ["/app/config", "/app/logs", "/app/abi"]
+
+# Set environment variables with defaults
+ENV WHITE_LIST_PROTOCOLS="aave-v3,aave-v2,lendle,venus-core-pool" \
+    WHITE_LIST_TOKENS="USDT,USDC,DAI,GHO,AUSD,TUSD,USD₮0,FRAX,LUSD"
+
+# Health check (проверяем наличие cron процесса)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep cron || exit 1
+
+# Run collector
+CMD ["python", "-u", "-m", "data_collector.collector"] 

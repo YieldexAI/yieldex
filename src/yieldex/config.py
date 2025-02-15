@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 import logging
 from web3 import Web3
 # from moccasin import NetworkConfig
+import json
+from pathlib import Path
 
 load_dotenv()
 
@@ -44,21 +46,29 @@ def validate_rpc_connection():
             logger.error(f"Error connecting to {chain} RPC: {str(e)}")
 
 # Validate required environment variables
-def validate_env_vars():
-    required_vars = {
-        'SUPABASE_URL': os.getenv('SUPABASE_URL'),
-        'SUPABASE_KEY': os.getenv('SUPABASE_KEY'),
-        'RPC_URLs': {
-            'Polygon': os.getenv('POLYGON_RPC_URL'),
-            'Mantle': os.getenv('MANTLE_RPC_URL'),
-            'Ethereum': os.getenv('ETHEREUM_RPC_URL'),
-            'Arbitrum': os.getenv('ARBITRUM_RPC_URL'),
-            'Optimism': os.getenv('OPTIMISM_RPC_URL'),
-            'Base': os.getenv('BASE_RPC_URL'),
-            'Avalanche': os.getenv('AVALANCHE_RPC_URL')
+def validate_env_vars(service_type="collector"):
+    """Validate required environment variables"""
+    if service_type == "collector":
+        required_vars = {
+            'SUPABASE_URL': os.getenv('SUPABASE_URL'),
+            'SUPABASE_KEY': os.getenv('SUPABASE_KEY'),
         }
-    }
-
+    else:
+        # Полная валидация для других сервисов
+        required_vars = {
+            'SUPABASE_URL': os.getenv('SUPABASE_URL'),
+            'SUPABASE_KEY': os.getenv('SUPABASE_KEY'),
+            'RPC_URLs': {
+                'Polygon': os.getenv('POLYGON_RPC_URL'),
+                'Mantle': os.getenv('MANTLE_RPC_URL'),
+                'Ethereum': os.getenv('ETHEREUM_RPC_URL'),
+                'Arbitrum': os.getenv('ARBITRUM_RPC_URL'),
+                'Optimism': os.getenv('OPTIMISM_RPC_URL'),
+                'Base': os.getenv('BASE_RPC_URL'),
+                'Avalanche': os.getenv('AVALANCHE_RPC_URL')
+            }
+        }
+    
     missing_vars = []
     for var, value in required_vars.items():
         if isinstance(value, dict):
@@ -221,5 +231,18 @@ SUPPORTED_PROTOCOLS = {
 }
 
 YIELDEX_ORACLE_ABI = 'YieldexOracle.sol'
+
+def load_abi(contract_name: str) -> dict:
+    """Load ABI from file"""
+    abi_path = Path('/app/abi') / f'{contract_name}.json'
+    try:
+        with open(abi_path) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logger.error(f"ABI file not found: {contract_name}.json")
+        raise
+    except json.JSONDecodeError:
+        logger.error(f"Invalid JSON in ABI file: {contract_name}.json")
+        raise
 
 
