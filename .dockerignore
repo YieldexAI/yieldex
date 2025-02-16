@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+.env.*
+.python-version
+
+# Python
+logs/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Docker
+Dockerfile*
+docker-compose*
+*.tar
+*.gz
+*.tgz
+
+# Docker images and containers
+/var/lib/docker
+*.docker
+*.dockerignore

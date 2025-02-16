@@ -6,8 +6,12 @@ LABEL maintainer="exectrogod@gmail.com"
 LABEL description="Data collector service for Yieldex"
 LABEL version="1.0"
 
-# Install cron
-RUN apt-get update && apt-get install -y cron
+# Install cron and procps without recommended packages
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cron \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
@@ -28,7 +32,8 @@ COPY src/common/abi/ /app/abi/
 ENV PYTHONPATH=/app/src
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install pytest-cov
 
 # Create volumes
 VOLUME ["/app/config", "/app/logs", "/app/abi"]
@@ -37,9 +42,5 @@ VOLUME ["/app/config", "/app/logs", "/app/abi"]
 ENV WHITE_LIST_PROTOCOLS="aave-v3,aave-v2,lendle,venus-core-pool" \
     WHITE_LIST_TOKENS="USDT,USDC,DAI,GHO,AUSD,TUSD,USD₮0,FRAX,LUSD"
 
-# Health check (проверяем наличие cron процесса)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD pgrep cron || exit 1
-
-# Run collector
-CMD ["python", "-u", "-m", "data_collector.collector"] 
+# Run cron in foreground
+CMD ["cron", "-f"] 

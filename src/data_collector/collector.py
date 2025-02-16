@@ -10,50 +10,45 @@ from pathlib import Path
 import requests
 from supabase import create_client
 
-# Обновляем импорты на новую структуру
+# Update imports to new structure
 from common.config import SUPABASE_KEY, SUPABASE_URL
 from data_collector.config import validate_env_vars
 
 # Configure logging
-LOG_DIR = "logs"
+LOG_DIR = "/app/logs"
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
-# Формируем имя файла лога с текущей датой
+# Form log filename with current date
 log_filename = os.path.join(LOG_DIR, f"collector_{datetime.now().strftime('%Y%m%d')}.log")
 
-# Настраиваем форматирование логов
+# Configure log formatting
 log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 formatter = logging.Formatter(log_format)
 
-# Создаем logger
+# Create logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# Очищаем существующие handlers
+# Clear existing handlers
 logger.handlers = []
 
-# Handler для файла
+# Handler for file only
 file_handler = logging.FileHandler(log_filename)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
-# Handler для консоли
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
-
-# Отключаем propagation логов, чтобы избежать дублирования
+# Disable log propagation
 logger.propagate = False
 
-# Добавляем кэш конфигурации
+# Add configuration cache
 CONFIG_CACHE = {}
 LAST_CONFIG_UPDATE = 0
-CONFIG_UPDATE_INTERVAL = 600  # 10 минут
+CONFIG_UPDATE_INTERVAL = 600  # 10 minutes
 
 CONFIG_PATH = Path('/app/config/config.json')
 
-# Получаем интервал из переменной окружения
+# Get interval from environment variable
 COLLECTION_INTERVAL = int(os.getenv('COLLECTION_INTERVAL', 300))
 
 def load_config():
@@ -90,7 +85,7 @@ def fetch_pools() -> List[Dict]:
             if pool['project'] in white_lists['protocols'] and pool['symbol'] in white_lists['tokens']
         ]
         
-        # Добавляем детальное логирование найденных пулов
+        # Add detailed logging for found pools
         logger.info(f"Filtered to {len(filtered_pools)} relevant pools")
         for pool in filtered_pools:
             logger.info(f"Found pool: {pool['symbol']} on {pool['chain']} in {pool['project']} "
