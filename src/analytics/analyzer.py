@@ -1,7 +1,15 @@
 import logging
 from typing import Optional, Dict, List
-from .config import SUPABASE_URL, SUPABASE_KEY
+from common.config import SUPABASE_URL, SUPABASE_KEY
 from supabase import create_client
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+logger = logging.getLogger(__name__)
 
 GAS_COSTS = {
     'Polygon': 0.05,
@@ -64,25 +72,45 @@ def get_latest_apy_data():
 
 def get_recommendations(min_profit: float = 0.5) -> List[Dict]:
     """Generate recommendations for moving funds considering gas costs"""
+    logger.info("Starting get_recommendations")
+    
     current_positions = get_current_positions()
+    logger.info(f"Got current positions: {current_positions}")
+    
     latest_apy = get_latest_apy_data()
+    logger.info(f"Got latest APY data: {latest_apy}")
+    
+    if not current_positions:
+        logger.warning("No current positions found")
+        return []
+        
+    if not latest_apy:
+        logger.warning("No APY data found")
+        return []
     
     # Collect latest APY for each pool
     apy_map = {p['pool_id']: p for p in latest_apy}
+    logger.info(f"Created APY map with {len(apy_map)} entries")
     
     recommendations = []
     
     for position in current_positions:
         current_pool = apy_map.get(position['pool_id'])
         if not current_pool:
-            logging.warning(f"No APY data for position {position['pool_id']}")
+            logger.warning(f"No APY data for position {position['pool_id']}")
             continue
             
+        logger.info(f"Analyzing position in {current_pool['chain']} with {current_pool['asset']}")
+        
         # Find best option for this asset considering gas
         best_option = None
         max_profit = 0
         
         for pool in latest_apy:
+            # Log potential swap options
+            if "aave-v3" in pool['pool_id'] and pool['chain'] == current_pool['chain']:
+                logger.info(f"Found potential swap target: {pool['asset']} with APY {pool['apy']}%")
+            
             if pool['asset'] != current_pool['asset'] and \
                "aave-v3" in pool['pool_id'] and \
                pool['chain'] == current_pool['chain']:
@@ -93,6 +121,11 @@ def get_recommendations(min_profit: float = 0.5) -> List[Dict]:
                 
                 effective_apy = pool['apy'] * (1 - swap_cost/100)
                 profit = effective_apy - current_pool['apy'] - gas_cost
+                
+                logger.info(f"Checking swap {current_pool['asset']} -> {pool['asset']}: "
+                          f"Profit = {profit:.2f}% (Target APY: {pool['apy']}%, "
+                          f"Current APY: {current_pool['apy']}%, "
+                          f"Gas cost: {gas_cost}%)")
                 
                 if profit > max_profit and profit > min_profit:
                     max_profit = profit

@@ -2,7 +2,7 @@ import os
 import logging
 import time
 from typing import List, Dict
-from ..yieldex.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_THREAD_ID
+from ..common.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_THREAD_ID
 import requests
 from telegram import Bot
 import asyncio

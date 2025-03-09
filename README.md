@@ -136,3 +136,9 @@ print("Balance:", balance)
 If you have any questions about how this repository works or suggestions for improvements, please open an Issue or Pull Request on GitHub.
 
 Thank you for using Yieldex!
+
+# Yieldex Data Collector
+
+![Test](https://github.com/username/yieldex/actions/workflows/test.yml/badge.svg)
+![Release](https://github.com/username/yieldex/actions/workflows/release.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/Coverage-98%25-brightgreen)

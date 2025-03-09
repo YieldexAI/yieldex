@@ -1,23 +1,7 @@
 import os
 from web3 import Web3
-from common.config import validate_base_env_vars, logger, load_abi, RPC_URLS, BLOCK_EXPLORERS
+from common.config import validate_base_env_vars, logger, load_abi, RPC_URLS
 
-# Contract addresses
-AAVE_V3_ADDRESSES = {...}
-AAVE_V2_ADDRESSES = {...}
-LENDLE_POOL_ADDRESS = {...}
-YIELDEX_ORACLE_ADDRESS = {...}
-CURVE_POOLS = {...}
-UNISWAP_V3_ROUTER = {...}
-
-SUPPORTED_PROTOCOLS = {
-    'aave-v3': AAVE_V3_ADDRESSES,
-    'aave-v2': AAVE_V2_ADDRESSES,
-    'lendle': LENDLE_POOL_ADDRESS,
-    'yieldex-oracle': YIELDEX_ORACLE_ADDRESS,
-    'curve': CURVE_POOLS,
-    'uniswap-v3': UNISWAP_V3_ROUTER
-}
 
 def validate_env_vars() -> bool:
     """Validate environment variables for onchain operations"""

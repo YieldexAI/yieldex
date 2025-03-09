@@ -3,10 +3,12 @@ Onchain operations service for Yieldex protocol.
 Handles blockchain interactions and smart contract operations.
 """
 
-from .operator import (
+from .onchain_operator import (
     AaveOperator,
     UniswapV3Operator,
-    LendleOperator
+    LendleOperator,
+    SiloOperator,
+    CurveOperator
 )
 
 __version__ = "0.3.0" 

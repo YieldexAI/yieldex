@@ -10,14 +10,12 @@ from web3 import Web3
 from web3.contract import Contract
 from web3.types import TxParams
 
-from src.yieldex.analytics import get_recommendations
-from src.yieldex.config import (AAVE_V3_ADDRESSES, LENDLE_POOL_ADDRESS,
-                                MANTLE_RPC_URL, POLYGON_RPC_URL, PRIVATE_KEY,
-                                RPC_URLS, STABLECOINS, SUPABASE_KEY,
-                                SUPABASE_URL)
-# from src.yieldex.data_collector import save_my_pool_balance
-from onchain.protocol_fabric import AaveOperator, UniswapV3Operator
 from common.utils import get_token_address
+
+from onchain.protocol_fabric import AaveOperator, UniswapV3Operator, SiloOperator, CurveOperator, LendleOperator
+from src.analytics.analyzer import get_recommendations
+from src.common.config import (AAVE_V3_ADDRESSES, LENDLE_POOL_ADDRESS,
+                                PRIVATE_KEY, RPC_URLS)
 
 logger = logging.getLogger(__name__)
 ABI_DIR = Path(__file__).parent / "abi"
@@ -172,7 +170,7 @@ if __name__ == "__main__":
     recommendations = get_recommendations()
     for recomedation in recommendations:
         print(recomedation)
-        execute_uniswap_flow(recomedation)
+        # execute_uniswap_flow(recomedation)
 
 
 
