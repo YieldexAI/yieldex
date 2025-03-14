@@ -23,7 +23,8 @@ RPC_URLS = {
     'Optimism': os.getenv("OPTIMISM_RPC_URL"),
     'Base': os.getenv("BASE_RPC_URL"),
     'Avalanche': os.getenv("AVALANCHE_RPC_URL"),
-    'Sonic': os.getenv("SONIC_RPC_URL")
+    'Sonic': os.getenv("SONIC_RPC_URL"),
+    'Scroll': os.getenv("SCROLL_RPC_URL")
 }
 
 
@@ -46,7 +47,8 @@ BLOCK_EXPLORERS = {
     'Base': 'https://basescan.org',
     'Ethereum': 'https://etherscan.io',
     'Avalanche': 'https://snowtrace.io',
-    'Sonic': 'https://sonicscan.org'
+    'Sonic': 'https://sonicscan.org',
+    'Scroll': 'https://scrollscan.com'
 }
 
 # Общие функции
@@ -193,7 +195,8 @@ STABLECOINS = {
         'Base': '0x833589fCD6eDb6E08B4DF7441424273dE8F059F7',
         'Avalanche': '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
         'Ethereum': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-        'Mantle': '0x09bc4e0d864854c6afb6eb9a9cdf58ac190d0df9'
+        'Mantle': '0x09bc4e0d864854c6afb6eb9a9cdf58ac190d0df9',
+        'Scroll': '0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4'
     },
     'USDC.E': {
         'Sonic': '0x29219dd400f2Bf60E5a23d13Be72B486D4038894'
@@ -328,6 +331,11 @@ SILO_MARKETS = {
     }
 }
 
+# Адреса Compound III на Scroll
+COMPOUND_ADDRESSES = {
+    'Scroll': '0xB2f97c1Bd3bf02f5e74d13f02E3e26F93D77CE44'
+}
+
 
 SUPPORTED_PROTOCOLS = {
     'aave-v3': AAVE_V3_ADDRESSES,
@@ -336,7 +344,10 @@ SUPPORTED_PROTOCOLS = {
     'yieldex-oracle': YIELDEX_ORACLE_ADDRESS,
     'curve': CURVE_POOLS,
     'uniswap-v3': UNISWAP_V3_ROUTER,
-    'silo-v2': SILOS_ADDRESSES
+    'silo-v2': SILOS_ADDRESSES,
+    'compound-v3': COMPOUND_ADDRESSES
 }
 
 YIELDEX_ORACLE_ABI = 'YieldexOracle.sol'
+
+

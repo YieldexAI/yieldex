@@ -16,7 +16,7 @@ sys.path.insert(0, str(project_root))
 from src.common.utils import get_token_address
 from src.common.config import (PRIVATE_KEY, RPC_URLS, STABLECOINS, 
                      SUPPORTED_PROTOCOLS, BLOCK_EXPLORERS, YIELDEX_ORACLE_ADDRESS,
-                     SILO_MARKETS, SILO_VAULTS)
+                     SILO_MARKETS, SILO_VAULTS, COMPOUND_ADDRESSES)
 
 # Configure logging
 logging.basicConfig(
@@ -52,29 +52,23 @@ class BaseProtocolOperator:
                 'lendle': 'LendleLendingPool.json',
                 'yieldex-oracle': 'YieldexOracle.json',
                 'uniswap-v3': 'UniswapV3Router.json',
-                'silo-v2': 'SiloFactory.json'
+                'silo-v2': 'SiloFactory.json',
+                'compound-v3': 'CompoundComet.json'
             }
             
-            # Протоколы, которые не требуют проверки методом getReserveData
-            no_reserve_data_protocols = ['yieldex-oracle', 'uniswap-v3', 'silo-v2']
             
             if self.protocol not in abi_map:
                 raise ValueError(f"Unsupported protocol: {self.protocol}")
             
             abi_path = ABI_DIR / abi_map[self.protocol]
             
-            if not abi_path.exists():
-                logger.warning(f"ABI file not found at {abi_path}, trying to locate in parent directory")
-                # Попробуем найти файл в родительской директории (для запуска из командной строки)
-                alt_path = Path("src/common/abi") / abi_map[self.protocol]
-                if alt_path.exists():
+            # Check possible alternative paths
+            if not os.path.exists(abi_path):
+                alt_path = os.path.join(os.path.dirname(__file__), f"../common/abi/{self.protocol}.json")
+                if os.path.exists(alt_path):
                     abi_path = alt_path
                 else:
-                    alt_path = Path("common/abi") / abi_map[self.protocol]
-                    if alt_path.exists():
-                        abi_path = alt_path
-                    else:
-                        raise FileNotFoundError(f"ABI file not found: {abi_path}")
+                    raise FileNotFoundError(f"ABI file not found: {abi_path}")
             
             with open(abi_path) as f:
                 abi = json.load(f)
@@ -128,8 +122,15 @@ class BaseProtocolOperator:
         }
 
         # For L2 networks use gasPrice
-        if self.network in ['Arbitrum', 'Optimism', 'Mantle']:
-            base_params['gasPrice'] = self.w3.eth.gas_price
+        if self.network in ['Arbitrum', 'Optimism', 'Mantle', 'Sonic', 'Scroll']:
+            gas_price = self.w3.eth.gas_price
+            
+            # For Sonic, increase gas price by 50%
+            if self.network == 'Sonic':
+                gas_price = int(gas_price * 1.5)  # +50% to current gas price
+                logger.info(f"Using increased gas price for Sonic: {gas_price}")
+            
+            base_params['gasPrice'] = gas_price
         else:
             # For EVM-networks use EIP-1559 with base parameters
             try:
@@ -153,24 +154,62 @@ class BaseProtocolOperator:
             estimated_gas = tx_function.estimate_gas(tx_params)
             tx_params['gas'] = int(estimated_gas * 1.3)  # 30% buffer
             
-            signed_tx = self.account.sign_transaction(
-                tx_function.build_transaction(tx_params)
-            )
+            # Try to send transaction, with up to 3 attempts with increased gas price
+            max_attempts = 3
+            attempt = 1
             
-            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-            receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+            while attempt <= max_attempts:
+                try:
+                    signed_tx = self.account.sign_transaction(
+                        tx_function.build_transaction(tx_params)
+                    )
+                    
+                    tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+                    receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+                    
+                    if receipt.status != 1:
+                        raise Exception("Transaction reverted")
+                        
+                    tx_hash_hex = tx_hash.hex()
+                    logger.info(f"Transaction successful: {tx_hash_hex}")
+                    
+                    return f'{self.explorer_url}/tx/0x{tx_hash_hex}'
+                    
+                except Exception as e:
+                    error_msg = str(e)
+                    
+                    # Check if error is "transaction underpriced"
+                    if "underpriced" in error_msg.lower() and attempt < max_attempts:
+                        # Increase gas price by 30% for each retry
+                        if 'gasPrice' in tx_params:
+                            tx_params['gasPrice'] = int(tx_params['gasPrice'] * 1.3)
+                            logger.warning(f"Transaction underpriced. Increasing gas price to {tx_params['gasPrice']} (attempt {attempt}/{max_attempts})")
+                        else:
+                            # If using EIP-1559, increase both maxFeePerGas and maxPriorityFeePerGas
+                            if 'maxFeePerGas' in tx_params:
+                                tx_params['maxFeePerGas'] = int(tx_params['maxFeePerGas'] * 1.3)
+                                tx_params['maxPriorityFeePerGas'] = int(tx_params['maxPriorityFeePerGas'] * 1.3)
+                                logger.warning(f"Transaction underpriced. Increasing maxFeePerGas to {tx_params['maxFeePerGas']} (attempt {attempt}/{max_attempts})")
+                            else:
+                                # Fallback to standard gasPrice if neither is set
+                                tx_params['gasPrice'] = int(self.w3.eth.gas_price * (1.3 ** attempt))
+                                logger.warning(f"Transaction underpriced. Setting gasPrice to {tx_params['gasPrice']} (attempt {attempt}/{max_attempts})")
+                                
+                        # Update nonce in case it's changed
+                        tx_params['nonce'] = self.w3.eth.get_transaction_count(self.account.address)
+                        attempt += 1
+                        continue
+                    else:
+                        # For other errors or if max attempts reached, raise the exception
+                        logger.error(f"Transaction error: {error_msg}")
+                        raise
             
-            if receipt.status != 1:
-                raise Exception("Transaction reverted")
-                
-            tx_hash_hex = tx_hash.hex()
-            logger.info(f"Transaction successful: {tx_hash_hex}")
-            
-            return f'{self.explorer_url}/tx/0x{tx_hash_hex}'
+            # If we've reached here, all attempts failed
+            raise Exception(f"Failed to send transaction after {max_attempts} attempts")
             
         except Exception as e:
             logger.error(f"Transaction failed: {str(e)}")
-            raise
+            return None
 
     def _call_contract(self, function) -> Any:
         """Execute contract call with proper gas estimation"""
@@ -674,6 +713,11 @@ class UniswapV3Operator(BaseProtocolOperator):
         path_hex = f"{token_in_clean}{fee_hex}{token_out_clean}"
         return bytes.fromhex(path_hex)
 
+
+class CollateralType(Enum):
+    STANDARD = 0
+    PROTECTED = 1
+
 class SiloOperator(BaseProtocolOperator):
     """Class for working with Silo-v2 protocol across networks
     
@@ -683,9 +727,7 @@ class SiloOperator(BaseProtocolOperator):
     """
     
     # Add an enum for collateral types
-    class CollateralType(Enum):
-        STANDARD = 0
-        PROTECTED = 1
+
     
     def __init__(self, network: str, market_id: str = None):
         """
@@ -1378,172 +1420,7 @@ class SiloOperator(BaseProtocolOperator):
             'is_solvent': is_solvent,
             'has_collateral': has_collateral
         }
-        
-    def borrow(self, token: str, amount: float) -> str:
-        """
-        Borrow assets from Silo vault
-        
-        Args:
-            token: Token symbol (e.g. 'USDC.E')
-            amount: Amount to borrow
-            
-        Returns:
-            Transaction hash
-        """
-        token_address = STABLECOINS[token][self.network]
-        amount_wei = self._convert_to_wei(token_address, amount)
-        silo_address = self._get_silo_address(token)
-        
-        # Create Silo contract
-        with open(ABI_DIR / 'Silo.json') as f:
-            silo_contract = self.w3.eth.contract(
-                address=silo_address,
-                abi=json.load(f)
-            )
-        
-        # Check borrowing capacity
-        max_borrow = silo_contract.functions.maxBorrow(self.account.address).call()
-        if amount_wei > max_borrow:
-            raise ValueError(f"Cannot borrow {amount} {token}, maximum allowed is {self._convert_from_wei(token_address, max_borrow)}")
-        
-        # Execute borrow transaction
-        borrow_tx = self._send_transaction(
-            silo_contract.functions.borrow(
-                amount_wei,
-                self.account.address,
-                self.account.address
-            )
-        )
-        
-        logger.info(f"Borrowed {amount} {token} from Silo vault: {borrow_tx}")
-        return borrow_tx
-    
-    def repay(self, token: str, amount: float = None) -> str:
-        """
-        Repay borrowed assets to Silo vault
-        
-        Args:
-            token: Token symbol (e.g. 'USDC.E')
-            amount: Amount to repay, if None - repay all outstanding debt
-            
-        Returns:
-            Transaction hash
-        """
-        token_address = STABLECOINS[token][self.network]
-        silo_address = self._get_silo_address(token)
-        
-        # Create Silo contract and token contract
-        with open(ABI_DIR / 'Silo.json') as f:
-            silo_contract = self.w3.eth.contract(
-                address=silo_address,
-                abi=json.load(f)
-            )
-            
-        with open(ABI_DIR / 'ERC20.json') as f:
-            token_contract = self.w3.eth.contract(
-                address=token_address,
-                abi=json.load(f)
-            )
-        
-        # Get max repayable amount for this account
-        max_repay = silo_contract.functions.maxRepay(self.account.address).call()
-        
-        if max_repay == 0:
-            raise ValueError(f"No outstanding debt for {token} in this vault")
-        
-        if amount is None:
-            # Repay all outstanding debt
-            amount_wei = max_repay
-        else:
-            # Convert amount to wei
-            amount_wei = self._convert_to_wei(token_address, amount)
-            
-            # Check if amount exceeds debt
-            if amount_wei > max_repay:
-                raise ValueError(f"Cannot repay {amount} {token}, outstanding debt is only {self._convert_from_wei(token_address, max_repay)}")
-        
-        # First, approve tokens for the silo contract
-        approve_tx = self._send_transaction(
-            token_contract.functions.approve(silo_address, amount_wei)
-        )
-        logger.info(f"Approved {amount_wei / (10**token_contract.functions.decimals().call())} {token} for repay: {approve_tx}")
-        
-        # Execute repay transaction
-        repay_tx = self._send_transaction(
-            silo_contract.functions.repay(
-                amount_wei,
-                self.account.address
-            )
-        )
-        
-        logger.info(f"Repaid {self._convert_from_wei(token_address, amount_wei)} {token} to Silo vault: {repay_tx}")
-        return repay_tx
-    
-    def build_borrow_calldata(self, token: str, amount: float) -> str:
-        """
-        Build calldata for borrow function
-        
-        Args:
-            token: Token symbol
-            amount: Amount to borrow
-            
-        Returns:
-            Encoded function call
-        """
-        token_address = STABLECOINS[token][self.network]
-        amount_wei = self._convert_to_wei(token_address, amount)
-        silo_address = self._get_silo_address(token)
-        
-        with open(ABI_DIR / 'Silo.json') as f:
-            silo_contract = self.w3.eth.contract(
-                address=silo_address,
-                abi=json.load(f)
-            )
-        
-        # Create calldata for borrow function
-        return silo_contract.encodeABI(
-            fn_name="borrow",
-            args=[amount_wei, self.account.address, self.account.address]
-        )
-    
-    def build_repay_calldata(self, token: str, amount: float = None) -> str:
-        """
-        Build calldata for repay function
-        
-        Args:
-            token: Token symbol
-            amount: Amount to repay, if None - repay maximum possible
-            
-        Returns:
-            Encoded function call
-        """
-        token_address = STABLECOINS[token][self.network]
-        silo_address = self._get_silo_address(token)
-        
-        with open(ABI_DIR / 'Silo.json') as f:
-            silo_contract = self.w3.eth.contract(
-                address=silo_address,
-                abi=json.load(f)
-            )
-        
-        if amount is None:
-            # Get max repayable amount for this account
-            max_repay = silo_contract.functions.maxRepay(self.account.address).call()
-            
-            if max_repay == 0:
-                raise ValueError(f"No outstanding debt for {token} in this vault")
-                
-            # Repay all outstanding debt
-            amount_wei = max_repay
-        else:
-            # Convert amount to wei
-            amount_wei = self._convert_to_wei(token_address, amount)
-        
-        # Create calldata for repay function
-        return silo_contract.encodeABI(
-            fn_name="repay",
-            args=[amount_wei, self.account.address]
-        )
+
 
     def get_share_balance(self, token_address, owner_address):
         # Get balance of share tokens for accounting
@@ -1561,474 +1438,783 @@ class SiloOperator(BaseProtocolOperator):
         with open(ABI_DIR / "Silo.json") as f:
             return json.load(f)
 
-def get_protocol_operator(network: str, protocol: str, **kwargs):
-    """Factory method to get protocol operator"""
-    if protocol == 'aave-v3':
-        return AaveOperator(network, protocol)
-    elif protocol == 'lendle':
-        return LendleOperator(network, protocol)
-    elif protocol == 'uniswap-v3':
-        return UniswapV3Operator(network, protocol)
-    elif protocol == 'curve':
-        if 'pool_name' not in kwargs:
-            raise ValueError("pool_name is required for curve")
-        return CurveOperator(network, kwargs['pool_name'])
-    elif protocol == 'silo-v2':
-        # Для Silo может быть передан дополнительный параметр market_id
-        market_id = kwargs.get('market_id')
-        return SiloOperator(network, market_id)
-    else:
-        raise ValueError(f"Unknown protocol: {protocol}")
-
-def process_recommendations(recommendations: List[Dict]):
-    operator = AgentOperator(network='Sonic')
-    operator.load_agents_from_db()
-    
-    calls = []
-    for rec in recommendations:
-        protocol = rec.get('protocol', 'aave-v3')
-        action = rec.get('action', 'deposit')  # Default action is deposit, but can be: deposit, withdraw, borrow, repay
+    def supply(self, token: str, amount: float, collateral_type: CollateralType = CollateralType.PROTECTED) -> Optional[str]:
+        """
+        Deposit funds into Silo vault
         
-        if protocol == 'silo-v2':
-            # Извлекаем market_id из pool_id, если он передан
-            # Формат pool_id: {asset}_{chain}_{protocol}_{market_id}
-            # Например: USDC.E_Sonic_silo-v2_20
-            pool_id = rec.get('pool_id', '')
-            if '_' in pool_id:
-                parts = pool_id.split('_')
-                market_id = parts[-1] if len(parts) >= 4 else None
-            else:
-                market_id = None
+        Args:
+            token: Token symbol (e.g. 'USDC.E')
+            amount: Amount to deposit
+            collateral_type: Type of collateral, PROTECTED (1) by default for stablecoins
             
-            silo = SiloOperator(rec['chain'], market_id)
-            
-            # Determine action type and build appropriate calldata
-            if action == 'deposit':
-                # Определяем тип коллатерала, по умолчанию используем standard
-                collateral_type = rec.get('collateral_type', 'standard')
-                
-                calls.append({
-                    'target': silo._get_silo_address(rec['token']),
-                    'data': silo.build_deposit_calldata(
-                        token=rec['token'],
-                        amount=rec['amount'],
-                        collateral_type=collateral_type
-                    )
-                })
-            elif action == 'withdraw':
-                # Determine collateral type
-                collateral_type = rec.get('collateral_type', 'standard')
-                
-                calls.append({
-                    'target': silo._get_silo_address(rec['token']),
-                    'data': silo.build_withdraw_calldata(
-                        token=rec['token'],
-                        amount=rec.get('amount'),  # None will withdraw all
-                        collateral_type=collateral_type
-                    )
-                })
-            elif action == 'borrow':
-                calls.append({
-                    'target': silo._get_silo_address(rec['token']),
-                    'data': silo.build_borrow_calldata(
-                        token=rec['token'],
-                        amount=rec['amount']
-                    )
-                })
-            elif action == 'repay':
-                calls.append({
-                    'target': silo._get_silo_address(rec['token']),
-                    'data': silo.build_repay_calldata(
-                        token=rec['token'],
-                        amount=rec.get('amount')  # None will repay all
-                    )
-                })
+        Returns:
+            Transaction hash if successful, None otherwise
+        """
+        try:
+            # Get token address
+            if token in STABLECOINS and self.network in STABLECOINS[token]:
+                token_address = STABLECOINS[token][self.network]
             else:
-                logger.warning(f"Unsupported action for Silo: {action}")
+                token_address = get_token_address(token, self.network)
                 
-        elif protocol == 'aave-v3':
-            aave = AaveOperator(rec['chain'], 'aave-v3')
+            logger.info(f"Supplying {amount} {token} to Silo market {self.market_id} on {self.network}")
             
-            if action == 'deposit':
-                calls.append({
-                    'target': aave.contract_address,
-                    'data': aave.build_deposit_calldata(
-                        token=rec['token'],
-                        amount=rec['amount']
-                    )
-                })
-            elif action == 'withdraw':
-                calls.append({
-                    'target': aave.contract_address,
-                    'data': aave.build_withdraw_calldata(
-                        token=rec['token'],
-                        amount=rec.get('amount')  # None will withdraw all
-                    )
-                })
-            else:
-                logger.warning(f"Unsupported action for Aave: {action}")
-        # Add other protocols as needed
-    
-    operator.execute_on_agents(calls)
-
-def read_silo_data(network: str, token: str, market_id: str, wallet_address: str = None):
-    """
-    Функция для чтения и вывода данных из Silo контракта.
-    
-    Args:
-        network: Сеть (например, 'Sonic')
-        token: Символ токена (например, 'USDC.E')
-        market_id: ID рынка (например, '20')
-        wallet_address: Опциональный адрес кошелька для проверки баланса
-    
-    Returns:
-        Dict: Словарь с данными о рынке и балансах
-    """
-    try:
-        logger.info(f"Чтение данных из Silo для {token} в сети {network}, market_id: {market_id}")
-        
-        # Создаем экземпляр SiloOperator
-        silo = SiloOperator(network, market_id)
-        
-        # Получаем адрес Silo контракта для указанного токена и market_id
-        silo_address = silo._get_silo_address(token)
-        logger.info(f"Адрес Silo контракта: {silo_address}")
-        
-        # Получаем данные о рынке
-        market_data = silo.get_market_data(token)
-        
-        # Данные для возврата
-        result = {
-            "silo_address": silo_address,
-            "market_id": market_id,
-            "token": token,
-            "network": network,
-            "market_data": market_data
-        }
-        
-        # Если указан адрес кошелька, проверяем балансы и лимиты
-        if wallet_address:
-            # Создаем контракт Silo для чтения данных
-            with open(ABI_DIR / 'Silo.json') as f:
-                silo_contract = silo.w3.eth.contract(
-                    address=silo_address,
+            # Find Silo for this token and market
+            silos = self.find_silos_for_market(self.market_id)
+            
+            # Filter silos to find the one matching our token and collateral type
+            matching_silo = None
+            for silo in silos:
+                silo_type = silo.get("silo_type")
+                token_info = silo.get("token_info", {})
+                
+                # Check if token symbol or name contains our token
+                symbol = token_info.get("symbol", "").upper()
+                name = token_info.get("name", "").upper()
+                silo_symbol = token_info.get("silo_symbol", "").upper()
+                silo_name = token_info.get("silo_name", "").upper()
+                
+                # Use different checks depending on token type
+                if token in ["USDC", "USDC.E", "USDT", "USDT.E", "DAI"]:
+                    # For stablecoins, prefer matching by symbol and type
+                    if (
+                        (token in symbol or token in name or token in silo_symbol or token in silo_name) and
+                        silo_type == collateral_type.value
+                    ):
+                        matching_silo = silo
+                        break
+                else:
+                    # For other tokens, match by symbol
+                    if token in symbol or token in name or token in silo_symbol or token in silo_name:
+                        matching_silo = silo
+                        break
+            
+            # If no match by token name, use collateral type as fallback
+            if not matching_silo:
+                for silo in silos:
+                    if silo.get("silo_type") == collateral_type.value:
+                        matching_silo = silo
+                        logger.warning(f"No exact match for {token}, using silo with correct collateral type")
+                        break
+            
+            # If still no match, use the first silo as a last resort
+            if not matching_silo and silos:
+                matching_silo = silos[0]
+                logger.warning(f"No matching silo for {token} and collateral type {collateral_type.name}, using first available silo")
+            
+            if not matching_silo:
+                raise ValueError(f"No suitable silo found for token {token} in market {self.market_id}")
+                
+            silo_address = matching_silo["silo_address"]
+            logger.info(f"Found matching silo for {token}: {silo_address}")
+            
+            # Create ERC20 token contract
+            with open(ABI_DIR / 'ERC20.json') as f:
+                token_contract = self.w3.eth.contract(
+                    address=token_address,
                     abi=json.load(f)
                 )
             
-            # Получаем баланс обычного коллатерала
-            standard_balance = silo_contract.functions.balanceOf(wallet_address).call()
+            # Get and log balance
+            decimals = token_contract.functions.decimals().call()
+            balance = token_contract.functions.balanceOf(self.account.address).call()
+            balance_human = balance / 10**decimals
             
-            # Получаем информацию о максимально доступном для вывода количестве
-            max_withdraw_standard = silo_contract.functions.maxWithdraw(
-                wallet_address, 
-                SiloOperator.COLLATERAL_TYPE['standard']
+            logger.info(f"Current balance: {balance_human} {token}")
+            logger.info(f"Attempting to supply: {amount} {token}")
+            
+            amount_wei = int(amount * 10**decimals)
+            if balance < amount_wei:
+                raise ValueError(f"Insufficient balance: have {balance_human}, need {amount} {token}")
+            
+            # Check allowance and approve if needed
+            allowance = token_contract.functions.allowance(
+                self.account.address,
+                silo_address
             ).call()
             
-            max_withdraw_protected = silo_contract.functions.maxWithdraw(
-                wallet_address, 
-                SiloOperator.COLLATERAL_TYPE['protected']
-            ).call()
+            if allowance < amount_wei:
+                logger.info(f"Approving {token} for Silo at {silo_address}")
+                approve_tx = token_contract.functions.approve(
+                    silo_address,
+                    amount_wei
+                )
+                self._send_transaction(approve_tx)
             
-            # Проверяем возможность заимствования
-            borrow_capacity = silo.check_borrowing_capacity(token)
+            # Now deposit into Silo
+            return self.deposit(silo_address, amount)
             
-            # Проверяем solvent status для пользователя
-            is_solvent = silo_contract.functions.isSolvent(wallet_address).call()
-            
-            # Добавляем данные пользователя в результат
-            token_address = STABLECOINS[token][network]
-            result["user_data"] = {
-                "wallet_address": wallet_address,
-                "standard_collateral_balance": silo._convert_from_wei(token_address, standard_balance),
-                "max_withdraw_standard": silo._convert_from_wei(token_address, max_withdraw_standard),
-                "max_withdraw_protected": silo._convert_from_wei(token_address, max_withdraw_protected),
-                "borrowing_capacity": borrow_capacity,
-                "is_solvent": is_solvent
-            }
-        
-        # Выводим результаты в лог
-        logger.info(f"Результаты для Silo {token}_{network}_silo-v2_{market_id}:")
-        logger.info(f"Общие активы в хранилище: {market_data['total_assets']} {token}")
-        logger.info(f"Коллатеральные активы: {market_data['collateral_assets']} {token}")
-        logger.info(f"Долговые активы: {market_data['debt_assets']} {token}")
-        logger.info(f"Доступная ликвидность: {market_data['liquidity']} {token}")
-        logger.info(f"Уровень утилизации: {market_data['utilization']:.2f}%")
-        
-        if wallet_address and "user_data" in result:
-            logger.info(f"Данные пользователя {wallet_address}:")
-            logger.info(f"Баланс стандартного коллатерала: {result['user_data']['standard_collateral_balance']} {token}")
-            logger.info(f"Максимально доступно для вывода (стандартный): {result['user_data']['max_withdraw_standard']} {token}")
-            logger.info(f"Максимально доступно для вывода (защищенный): {result['user_data']['max_withdraw_protected']} {token}")
-            logger.info(f"Максимально доступно для займа: {result['user_data']['borrowing_capacity']['max_borrow_amount']} {token}")
-            logger.info(f"Платежеспособность: {'Да' if result['user_data']['is_solvent'] else 'Нет'}")
-        
-        return result
-        
-    except Exception as e:
-        logger.error(f"Ошибка при чтении данных из Silo: {str(e)}", exc_info=True)
-        raise
-
-def find_silos_for_market(network: str, market_id: str) -> list:
-    """
-    Функция для поиска всех Silo контрактов для указанного маркета.
-    
-    Args:
-        network: Сеть (например, 'Sonic')
-        market_id: ID рынка (например, '8')
-    
-    Returns:
-        List: Список со всеми найденными Silo контрактами и информацией о токенах
-    """
-    try:
-        logger.info(f"Поиск Silo контрактов для маркета {market_id} в сети {network}")
-        
-        # Создаем экземпляр SiloOperator
-        silo = SiloOperator(network, market_id)
-        
-        # Находим все Silo контракты для маркета
-        silos = silo.find_silos_for_market(market_id)
-        
-        # Проверяем, что мы нашли Silo контракты
-        if not silos:
-            logger.warning(f"Не найдено Silo контрактов для маркета {market_id}")
-            return []
-            
-        # Получаем полную информацию о каждом Silo
-        for i, silo_info in enumerate(silos):
-            silo_address = silo_info.get("silo_address")
-            silo_type = silo_info.get("silo_type", "неизвестный")
-            silo_type_name = "Standard" if silo_type == 0 else "Protected" if silo_type == 1 else "Неизвестный"
-            
-            # Если нет информации о токене, пытаемся получить ее
-            if not silo_info.get("token_info"):
-                token_info = silo.get_silo_info(silo_address)
-                silos[i]["token_info"] = token_info
-            
-            # Выводим информацию о Silo
-            token_info = silo_info.get("token_info", {})
-            logger.info(f"Найден Silo {i+1}: {silo_address} (тип: {silo_type_name})")
-            logger.info(f"  Токен: {token_info.get('symbol')} ({token_info.get('name')})")
-            logger.info(f"  Адрес токена: {token_info.get('address')}")
-            logger.info(f"  Decimals: {token_info.get('decimals')}")
-            
-            # Пытаемся получить дополнительную информацию о Silo
-            try:
-                with open(ABI_DIR / "Silo.json") as f:
-                    silo_contract = silo.w3.eth.contract(
-                        address=silo_address,
-                        abi=json.load(f)
-                    )
-                
-                # Получаем общие активы в хранилище
-                total_assets = silo_contract.functions.totalAssets().call()
-                silos[i]["total_assets"] = total_assets
-                
-                # Конвертируем в human-readable формат с учетом decimals
-                decimals = token_info.get("decimals", 18)
-                total_assets_human = total_assets / (10 ** decimals)
-                
-                # Выводим дополнительную информацию
-                logger.info(f"  Общие активы: {total_assets_human} {token_info.get('symbol', '')}")
-                
-            except Exception as e:
-                logger.warning(f"Не удалось получить дополнительную информацию о Silo {silo_address}: {str(e)}")
-        
-        return silos
-        
-    except Exception as e:
-        logger.error(f"Ошибка при поиске Silo контрактов: {str(e)}", exc_info=True)
-        raise
-
-def get_all_silo_markets(network: str) -> list:
-    """
-    Получает список всех доступных маркетов Silo для указанной сети.
-    
-    Args:
-        network: Сеть (например, 'Sonic')
-        
-    Returns:
-        List[str]: Список ID маркетов
-    """
-    try:
-        logger.info(f"Поиск всех доступных маркетов Silo в сети {network}")
-        
-        # Инициализация Web3 и контракта SiloFactory
-        w3 = Web3(Web3.HTTPProvider(RPC_URLS[network]))
-        factory_address = SUPPORTED_PROTOCOLS['silo-v2'][network]
-        
-        if not factory_address:
-            raise ValueError(f"SiloFactory address not configured for network {network}")
-        
-        # Загружаем ABI для SiloFactory
-        with open(ABI_DIR / "SiloFactory.json") as f:
-            factory_abi = json.load(f)
-        
-        # Создаем контракт SiloFactory
-        factory = w3.eth.contract(address=factory_address, abi=factory_abi)
-        
-        # Получаем максимальный ID маркета (через getNextSiloId)
-        try:
-            max_id = factory.functions.getNextSiloId().call()
-            logger.info(f"Максимальный ID маркета: {max_id}")
         except Exception as e:
-            logger.warning(f"Не удалось получить максимальный ID маркета: {str(e)}")
-            # Если не удалось получить, используем фиксированное значение для тестирования
-            max_id = 50
+            logger.error(f"Error in supply operation for {token} on {self.network}: {str(e)}")
+            return None
+    
+    def withdraw_token(self, token: str, amount: float, collateral_type: CollateralType = CollateralType.PROTECTED) -> Optional[str]:
+        """
+        Withdraw specific token from Silo market
         
-        # Получаем список всех доступных маркетов
-        markets = []
-        
-        # Проверяем каждый ID от 1 до max_id
-        for i in range(1, max_id + 1):
-            try:
-                # Получаем адрес SiloConfig для данного ID
-                config_address = factory.functions.idToSiloConfig(i).call()
+        Args:
+            token: Token symbol or address
+            amount: Amount to withdraw (in asset tokens)
+            collateral_type: Type of collateral (STANDARD or PROTECTED)
+            
+        Returns:
+            Transaction hash or None if operation failed
+        """
+        try:
+            # Find appropriate Silo for the token
+            silo_address = None
+            silos = self.find_silos_for_market(self.market_id)
+            
+            # Try to find exact match by token symbol and collateral type
+            for silo in silos:
+                silo_info = self.get_silo_info(silo)
+                if silo_info and 'symbol' in silo_info:
+                    symbol = silo_info['symbol']
+                    if token.upper() in symbol.upper():
+                        silo_type = "STANDARD" if collateral_type == CollateralType.STANDARD else "PROTECTED"
+                        if silo_type in symbol.upper():
+                            silo_address = silo
+                            logger.info(f"Found exact matching silo for {token}: {silo_address}")
+                            break
+            
+            # If no exact match, try to find by collateral type
+            if not silo_address:
+                for silo in silos:
+                    silo_info = self.get_silo_info(silo)
+                    if silo_info:
+                        # Check if this is the right type of silo (Protected/Standard)
+                        if collateral_type == CollateralType.PROTECTED and "PROTECTED" in str(silo_info).upper():
+                            silo_address = silo
+                            logger.info(f"Found protected silo: {silo_address}")
+                            break
+                        elif collateral_type == CollateralType.STANDARD and "STANDARD" in str(silo_info).upper():
+                            silo_address = silo
+                            logger.info(f"Found standard silo: {silo_address}")
+                            break
+            
+            # If still no match, use the first available silo
+            if not silo_address and silos:
+                silo_address = silos[0]
+                logger.warning(f"No matching silo found for {token}, using first available: {silo_address}")
+            
+            if not silo_address:
+                raise ValueError(f"No silos found for market {self.market_id}")
+            
+            # Check maximum withdrawable amount
+            max_withdraw = self.get_max_withdraw(silo_address, collateral_type)
+            if max_withdraw is None:
+                raise ValueError(f"Failed to get maximum withdrawable amount from silo {silo_address}")
                 
-                # Если адрес не нулевой, значит маркет существует
-                if config_address and config_address != "0x0000000000000000000000000000000000000000":
-                    logger.info(f"Найден маркет с ID {i}: {config_address}")
-                    markets.append(str(i))
-                    
-                    # Обновляем конфигурацию маркетов в кэше
-                    if network not in SILO_MARKETS:
-                        SILO_MARKETS[network] = {}
-                    SILO_MARKETS[network][str(i)] = config_address
-            except Exception as e:
-                logger.debug(f"Ошибка при проверке маркета {i}: {str(e)}")
+            logger.info(f"Maximum withdrawable amount: {max_withdraw}")
+            
+            # Adjust amount if necessary
+            if amount > max_withdraw:
+                logger.warning(f"Withdrawal amount ({amount}) exceeds maximum withdrawable amount ({max_withdraw}). Using maximum.")
+                amount = max_withdraw
+                
+            if amount <= 0:
+                logger.warning("Nothing to withdraw")
+                return None
+            
+            # Execute withdrawal using the redeem function
+            return self.withdraw(silo_address, amount, collateral_type)
+            
+        except Exception as e:
+            logger.error(f"Error withdrawing {token}: {e}")
+            return None
+    
+    def get_token_balance(self, token: str, collateral_type: CollateralType = CollateralType.PROTECTED) -> Optional[float]:
+        """
+        Get token balance in Silo
         
-        return markets
-        
-    except Exception as e:
-        logger.error(f"Ошибка при получении списка маркетов Silo: {str(e)}")
-        return []
+        Args:
+            token: Token symbol (e.g. 'USDC.E')
+            collateral_type: Type of collateral, PROTECTED (1) by default for stablecoins
+            
+        Returns:
+            Balance as float, or None if an error occurred
+        """
+        try:
+            logger.info(f"Getting balance for {token} in Silo market {self.market_id} on {self.network}")
+            
+            # Find Silo for this token and market
+            silos = self.find_silos_for_market(self.market_id)
+            
+            # Filter silos to find the one matching our token and collateral type
+            matching_silo = None
+            for silo in silos:
+                silo_type = silo.get("silo_type")
+                token_info = silo.get("token_info", {})
+                
+                # Check if token symbol or name contains our token
+                symbol = token_info.get("symbol", "").upper()
+                name = token_info.get("name", "").upper()
+                silo_symbol = token_info.get("silo_symbol", "").upper()
+                silo_name = token_info.get("silo_name", "").upper()
+                
+                # Use different checks depending on token type
+                if token in ["USDC", "USDC.E", "USDT", "USDT.E", "DAI"]:
+                    # For stablecoins, prefer matching by symbol and type
+                    if (
+                        (token in symbol or token in name or token in silo_symbol or token in silo_name) and
+                        silo_type == collateral_type.value
+                    ):
+                        matching_silo = silo
+                        break
+                else:
+                    # For other tokens, match by symbol
+                    if token in symbol or token in name or token in silo_symbol or token in silo_name:
+                        matching_silo = silo
+                        break
+            
+            # If no match by token name, use collateral type as fallback
+            if not matching_silo:
+                for silo in silos:
+                    if silo.get("silo_type") == collateral_type.value:
+                        matching_silo = silo
+                        logger.warning(f"No exact match for {token}, using silo with correct collateral type")
+                        break
+            
+            # If still no match, use the first silo as a last resort
+            if not matching_silo and silos:
+                matching_silo = silos[0]
+                logger.warning(f"No matching silo for {token} and collateral type {collateral_type.name}, using first available silo")
+            
+            if not matching_silo:
+                raise ValueError(f"No suitable silo found for token {token} in market {self.market_id}")
+                
+            silo_address = matching_silo["silo_address"]
+            logger.info(f"Found matching silo for {token}: {silo_address}")
+            
+            # Get balance
+            return self.get_silo_balance(silo_address)
+            
+        except Exception as e:
+            logger.error(f"Error getting balance for {token} on {self.network}: {str(e)}")
+            return None
 
-def inspect_silo_config(network: str, silo_config_address: str) -> dict:
+    def deposit(self, silo_address: str, amount: float) -> Optional[str]:
+        """
+        Deposit funds into Silo
+        
+        Args:
+            silo_address: Silo contract address
+            amount: Amount to deposit
+            
+        Returns:
+            Transaction hash or None in case of error
+        """
+        try:
+            if not Web3.is_checksum_address(silo_address):
+                silo_address = Web3.to_checksum_address(silo_address)
+            
+            # Load ABI for Silo
+            with open(ABI_DIR / "Silo.json") as f:
+                silo_abi = json.load(f)
+            
+            # Create contract
+            silo = self.w3.eth.contract(
+                address=silo_address,
+                abi=silo_abi
+            )
+            
+            # Get token address and log it
+            token_address = silo.functions.asset().call()
+            logger.info(f"Underlying token address: {token_address}")
+            
+            # Get silo decimals for reference
+            silo_decimals = silo.functions.decimals().call()
+            logger.info(f"Silo decimals: {silo_decimals}")
+            
+            # Get token contract and decimals
+            token_contract = self.w3.eth.contract(
+                address=token_address,
+                abi=json.load(open(ABI_DIR / "ERC20.json"))
+            )
+            
+            token_decimals = token_contract.functions.decimals().call()
+            logger.info(f"Token decimals: {token_decimals}")
+            
+            # Always use token decimals for amount conversion
+            amount_wei = int(amount * 10**token_decimals)
+            logger.info(f"Amount in wei (using token decimals): {amount_wei}")
+            
+            # Check balance
+            balance = token_contract.functions.balanceOf(self.account.address).call()
+            balance_human = balance / 10**token_decimals
+            logger.info(f"Current token balance: {balance_human}")
+            
+            # Check if enough balance
+            if balance < amount_wei:
+                error_msg = f"Insufficient funds: have {balance_human}, need {amount}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+            
+            # Check allowance
+            allowance = token_contract.functions.allowance(
+                self.account.address,
+                silo_address
+            ).call()
+            logger.info(f"Current allowance: {allowance}")
+            
+            # Approve if needed
+            if allowance < amount_wei:
+                logger.info(f"Approving token for Silo, amount: {amount_wei}")
+                approve_tx = token_contract.functions.approve(
+                    silo_address,
+                    amount_wei
+                )
+                self._send_transaction(approve_tx)
+            
+            # Execute deposit
+            logger.info(f"Depositing {amount} into Silo {silo_address}")
+            
+            # Use deposit function
+            deposit_tx = silo.functions.deposit(
+                amount_wei,
+                self.account.address
+            )
+            
+            return self._send_transaction(deposit_tx)
+        except Exception as e:
+            logger.error(f"Error depositing into Silo {silo_address}: {e}")
+            return None
+    
+    def withdraw(self, silo_address: str, amount: float, collateral_type: CollateralType = CollateralType.PROTECTED, force_withdrawal: bool = False) -> Optional[str]:
+        """
+        Withdraw funds from Silo using the redeem function
+        
+        Args:
+            silo_address: Silo contract address
+            amount: Amount to withdraw (in asset tokens)
+            collateral_type: Type of collateral (STANDARD or PROTECTED)
+            force_withdrawal: If True, attempts to withdraw the full requested amount even if not all 
+                              is immediately available. The protocol may fulfill this partially.
+        
+        Returns:
+            Transaction hash or None in case of error
+        """
+        try:
+            if not Web3.is_checksum_address(silo_address):
+                silo_address = Web3.to_checksum_address(silo_address)
+            
+            # Load ABI for Silo
+            with open(ABI_DIR / "Silo.json") as f:
+                silo_abi = json.load(f)
+            
+            # Create contract
+            silo = self.w3.eth.contract(
+                address=silo_address,
+                abi=silo_abi
+            )
+            
+            # Get withdrawal info
+            withdrawal_info = self.get_withdrawal_info(silo_address, collateral_type)
+            total_balance = withdrawal_info['total_balance']
+            max_withdraw = withdrawal_info['available_balance']
+            
+            if not force_withdrawal:
+                # Check if requested amount exceeds available amount
+                if amount > max_withdraw:
+                    logger.warning(f"Withdrawal amount ({amount}) exceeds maximum withdrawable amount ({max_withdraw}). Using maximum.")
+                    amount = max_withdraw
+                    
+                if amount <= 0:
+                    logger.warning(f"Nothing to withdraw (amount: {amount})")
+                    return None
+            else:
+                # For force withdrawal, we'll try with the full amount but inform the user
+                if amount > max_withdraw:
+                    logger.warning(f"Forced withdrawal of {amount} requested, but only {max_withdraw} is immediately available.")
+                    logger.warning(f"Protocol will likely fulfill only {max_withdraw / amount * 100:.2f}% of the request.")
+                    
+                # Cap at total balance
+                if amount > total_balance:
+                    logger.warning(f"Requested amount {amount} exceeds total balance {total_balance}. Using total balance.")
+                    amount = total_balance
+                
+                if amount <= 0:
+                    logger.warning(f"Nothing to withdraw (amount: {amount})")
+                    return None
+            
+            # Get token address for decimals
+            token_address = silo.functions.asset().call()
+            logger.info(f"Underlying token address: {token_address}")
+            
+            # Get token contract and decimals
+            token_contract = self.w3.eth.contract(
+                address=token_address,
+                abi=json.load(open(ABI_DIR / "ERC20.json"))
+            )
+            
+            token_decimals = token_contract.functions.decimals().call()
+            logger.info(f"Token decimals: {token_decimals}")
+            
+            # Convert amount to shares
+            amount_wei = int(amount * 10**token_decimals)
+            logger.info(f"Amount in wei (using token decimals): {amount_wei}")
+            
+            # Try to convert assets to shares
+            try:
+                shares = silo.functions.convertToShares(amount_wei).call()
+                logger.info(f"Converting {amount} assets to {shares/(10**token_decimals)} shares")
+            except Exception as e:
+                logger.warning(f"Failed to convert assets to shares: {e}")
+                # Fallback to using amount_wei directly
+                shares = amount_wei
+                logger.info(f"Using direct conversion for shares: {shares}")
+            
+            # Use redeem function
+            logger.info(f"Redeeming {shares/(10**token_decimals)} shares from Silo {silo_address}")
+            logger.info(f"Collateral type: {collateral_type.name}")
+            
+            # Build and execute transaction
+            tx_func = silo.functions.redeem(
+                shares,  # shares amount
+                self.account.address,  # receiver
+                self.account.address,  # owner
+                int(collateral_type.value)  # collateral type as uint8
+            )
+            
+            return self._send_transaction(tx_func)
+        except Exception as e:
+            logger.error(f"Error withdrawing from Silo {silo_address}: {e}")
+            return None
+    
+    def get_max_withdraw(self, silo_address: str, collateral_type: CollateralType = CollateralType.PROTECTED) -> Optional[float]:
+        """
+        Get maximum withdrawable amount from a Silo
+        
+        Args:
+            silo_address: Silo contract address
+            collateral_type: Type of collateral (STANDARD or PROTECTED)
+            
+        Returns:
+            Maximum withdrawable amount in human-readable format or None if error
+        """
+        try:
+            if not Web3.is_checksum_address(silo_address):
+                silo_address = Web3.to_checksum_address(silo_address)
+            
+            # Load ABI for Silo
+            with open(ABI_DIR / "Silo.json") as f:
+                silo_abi = json.load(f)
+            
+            # Create contract
+            silo = self.w3.eth.contract(
+                address=silo_address,
+                abi=silo_abi
+            )
+            
+            # Try to use maxWithdraw first (ERC4626 standard)
+            try:
+                # Call maxWithdraw function
+                max_withdraw_wei = silo.functions.maxWithdraw(
+                    self.account.address,
+                    int(collateral_type.value)
+                ).call()
+                
+                # Convert to human-readable format
+                decimals = silo.functions.decimals().call()
+                max_withdraw = max_withdraw_wei / 10**decimals
+                
+                logger.info(f"Maximum withdrawable amount: {max_withdraw}")
+                return max_withdraw
+            except Exception as e:
+                logger.warning(f"Error calling maxWithdraw: {e}")
+                
+                # Fallback: try to get balance as maxWithdraw alternative
+                try:
+                    balance_wei = silo.functions.balanceOf(self.account.address).call()
+                    decimals = silo.functions.decimals().call()
+                    balance = balance_wei / 10**decimals
+                    
+                    logger.info(f"Using balance as max withdrawable amount: {balance}")
+                    return balance
+                except Exception as e2:
+                    logger.error(f"Error getting balance: {e2}")
+                    return None
+        except Exception as e:
+            logger.error(f"Error determining maximum withdrawable amount: {e}")
+            return None
+    
+    def get_silo_balance(self, silo_address: str, account: Optional[str] = None) -> Optional[float]:
+        """
+        Get balance in Silo for the given account
+        
+        Args:
+            silo_address: Silo contract address
+            account: Account address (optional, defaults to current account)
+            
+        Returns:
+            Balance in human-readable format or None if error
+        """
+        try:
+            if not Web3.is_checksum_address(silo_address):
+                silo_address = Web3.to_checksum_address(silo_address)
+            
+            # Load ABI for Silo
+            with open(ABI_DIR / "Silo.json") as f:
+                silo_abi = json.load(f)
+            
+            # Create contract
+            silo = self.w3.eth.contract(
+                address=silo_address,
+                abi=silo_abi
+            )
+            
+            # Use the provided account or default to current account
+            account_address = account if account else self.account.address
+            
+            # Call balanceOf function
+            balance_wei = silo.functions.balanceOf(account_address).call()
+            
+            # Get decimals
+            decimals = silo.functions.decimals().call()
+            
+            # Convert to human-readable format
+            balance = balance_wei / 10**decimals
+            
+            return balance
+        except Exception as e:
+            logger.error(f"Error getting balance from Silo {silo_address}: {e}")
+            return None
+
+    def get_withdrawal_info(self, silo_address: str, collateral_type: CollateralType = CollateralType.PROTECTED) -> Dict[str, Any]:
+        """
+        Get comprehensive information about withdrawal options from a Silo
+        
+        Args:
+            silo_address: Silo contract address
+            collateral_type: Type of collateral (STANDARD or PROTECTED)
+            
+        Returns:
+            Dictionary containing total balance, available balance, and liquidity percentage
+        """
+        try:
+            if not Web3.is_checksum_address(silo_address):
+                silo_address = Web3.to_checksum_address(silo_address)
+            
+            # Load ABI for Silo
+            with open(ABI_DIR / "Silo.json") as f:
+                silo_abi = json.load(f)
+            
+            # Create contract
+            silo = self.w3.eth.contract(
+                address=silo_address,
+                abi=silo_abi
+            )
+            
+            # Get total balance (in share tokens)
+            share_balance_wei = silo.functions.balanceOf(self.account.address).call()
+            decimals = silo.functions.decimals().call()
+            share_balance = share_balance_wei / 10**decimals
+            
+            # Get total assets this represents
+            try:
+                # Try to use previewRedeem function if available (ERC4626 standard)
+                total_assets_wei = silo.functions.previewRedeem(share_balance_wei).call()
+            except Exception:
+                try:
+                    # Fallback to convertToAssets
+                    total_assets_wei = silo.functions.convertToAssets(share_balance_wei).call()
+                except Exception:
+                    # Final fallback - use balanceOf as share balance
+                    total_assets_wei = share_balance_wei
+            
+            # Get token decimals to convert to human-readable format
+            token_address = silo.functions.asset().call()
+            token_contract = self.w3.eth.contract(
+                address=token_address,
+                abi=json.load(open(ABI_DIR / "ERC20.json"))
+            )
+            token_decimals = token_contract.functions.decimals().call()
+            
+            total_assets = total_assets_wei / 10**token_decimals
+            
+            # Get maximum withdrawable amount
+            max_withdraw_wei = silo.functions.maxWithdraw(
+                self.account.address,
+                int(collateral_type.value)
+            ).call()
+            max_withdraw = max_withdraw_wei / 10**token_decimals
+            
+            # Calculate liquidity percentage
+            liquidity_percentage = (max_withdraw / total_assets * 100) if total_assets > 0 else 0
+            
+            result = {
+                "total_balance": total_assets,
+                "available_balance": max_withdraw,
+                "liquidity_percentage": liquidity_percentage,
+                "token_decimals": token_decimals,
+                "silo_decimals": decimals,
+                "shares": share_balance
+            }
+            
+            logger.info(f"Withdrawal info for Silo {silo_address}: {result}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error getting withdrawal info: {e}")
+            return {
+                "total_balance": 0,
+                "available_balance": 0,
+                "liquidity_percentage": 0,
+                "error": str(e)
+            }
+
+
+class CompoundOperator(BaseProtocolOperator):
+    """Class for working with Compound III protocol"""
+    
+
+    def get_protocol_balance(self, token: str) -> float:
+        """
+        Get user balance for a specific token in Compound protocol
+        
+        Args:
+            token: Token symbol (e.g., 'USDC')
+            
+        Returns:
+            Balance as float
+        """
+        try:
+            # Получаем адрес токена из словаря STABLECOINS
+            if token in STABLECOINS and self.network in STABLECOINS[token]:
+                token_address = STABLECOINS[token][self.network]
+            else:
+                token_address = get_token_address(token, self.network)
+                
+            logger.info(f"Checking balance for token {token} ({token_address}) in Compound")
+            
+            
+            # Create token contract
+            with open(ABI_DIR / 'ERC20.json') as f:
+                token_contract = self.w3.eth.contract(
+                    address=token_address,
+                    abi=json.load(f)
+                )
+            
+            # Get and log balance
+            balance = token_contract.functions.balanceOf(self.account.address).call()
+            decimals = token_contract.functions.decimals().call()
+            
+            # Для базового токена (обычно USDC) вызываем balanceOf
+            balance_wei = self.contract.functions.balanceOf(self.account.address).call()
+            balance_human = balance_wei / 10**decimals
+ 
+            logger.info(f"User balance for {token}: {balance_human} in protocol {self.protocol}")
+            
+            return balance
+        except Exception as e:
+            logger.error(f"Error getting protocol balance for {token}: {e}")
+            return 0.0
+
+    def supply(self, token: str, amount: float) -> str:
+        """Supply tokens to Compound protocol"""
+        token_address = get_token_address(token, self.network)
+        amount_wei = self._convert_to_wei(token_address, amount)
+        
+        # Проверяем баланс
+        # Create token contract
+        with open(ABI_DIR / 'ERC20.json') as f:
+            token_contract = self.w3.eth.contract(
+                address=token_address,
+                abi=json.load(f)
+            )
+        
+        decimals = token_contract.functions.decimals().call()
+        balance = token_contract.functions.balanceOf(self.account.address).call()
+        balance_human = balance / 10**decimals
+        
+        logger.info(f"Current balance of {token}: {balance_human}")
+        
+        if balance < amount_wei:
+            logger.error(f"Insufficient {token} balance: {balance_human}, needed: {amount}")
+            raise ValueError(f"Insufficient {token} balance")
+        
+        # Проверяем разрешение на использование токенов
+        allowance = token_contract.functions.allowance(
+            self.account.address, self.contract_address
+        ).call()
+        
+        if allowance < amount_wei:
+            approve_tx = token_contract.functions.approve(
+                self.contract_address, amount_wei * 2  # С запасом
+            )
+            
+            approve_hash = self._send_transaction(approve_tx)
+            logger.info(f"Approved {token} for Compound: {approve_hash}")
+        
+        # Выполняем поставку токенов
+        supply_tx = self.contract.functions.supply(token_address, amount_wei)
+        return self._send_transaction(supply_tx)
+    
+    def withdraw(self, token: str, amount: float) -> str:
+        """Withdraw tokens from Compound protocol"""
+
+        token_address = get_token_address(token, self.network)
+        amount_wei = self._convert_to_wei(token_address, amount)
+        
+        # Проверяем баланс
+        # Create token contract
+        with open(ABI_DIR / 'ERC20.json') as f:
+            token_contract = self.w3.eth.contract(
+                address=token_address,
+                abi=json.load(f)
+            )
+        
+        decimals = token_contract.functions.decimals().call()
+        balance = token_contract.functions.balanceOf(self.account.address).call()
+        balance_human = balance / 10**decimals
+        
+        logger.info(f"Current {token} balance in Compound: {balance_human}")
+        
+        # Если запрошено 0 или больше баланса, используем весь доступный баланс
+        if amount <= 0 or amount > balance_human:
+            amount = balance_human
+            logger.info(f"Adjusting withdrawal to available balance: {amount}")
+        
+        
+        # Выполняем вывод
+        withdraw_tx = self.contract.functions.withdraw(token_address, amount_wei)
+        return self._send_transaction(withdraw_tx)
+    
+
+def get_protocol_operator(network: str, protocol: str, **kwargs):
     """
-    Инспектирует контракт SiloConfig для определения его структуры и доступных методов
+    Factory function to get the appropriate protocol operator
     
     Args:
-        network: Сеть (например, 'Sonic')
-        silo_config_address: Адрес SiloConfig
+        network: Blockchain network name
+        protocol: Protocol name
         
     Returns:
-        dict: Информация о контракте
+        Protocol operator instance
     """
-    try:
-        logger.info(f"Инспектирование контракта SiloConfig {silo_config_address} в сети {network}")
-        
-        # Инициализация Web3
-        w3 = Web3(Web3.HTTPProvider(RPC_URLS[network]))
-        
-        # Собираем базовую ERC20 информацию
-        result = {
-            "address": silo_config_address,
-            "contract_type": "Unknown",
-            "methods": [],
-            "properties": {}
-        }
-        
-        # Проверяем базовую информацию
-        for abi_file in ["SiloConfig.json", "ERC20.json", "Silo.json"]:
-            try:
-                with open(ABI_DIR / abi_file) as f:
-                    contract_abi = json.load(f)
-                
-                contract = w3.eth.contract(address=silo_config_address, abi=contract_abi)
-                
-                # Пытаемся получить имя/символ/decimals (если это токен)
-                try:
-                    result["properties"]["name"] = contract.functions.name().call()
-                    result["contract_type"] = "Token or Silo"
-                except Exception:
-                    pass
-                
-                try:
-                    result["properties"]["symbol"] = contract.functions.symbol().call()
-                except Exception:
-                    pass
-                
-                try:
-                    result["properties"]["decimals"] = contract.functions.decimals().call()
-                except Exception:
-                    pass
-                
-                # Пытаемся определить, это SiloConfig или нет
-                try:
-                    # Если это SiloConfig, то должен быть метод asset
-                    asset_address = contract.functions.asset().call()
-                    result["properties"]["asset"] = asset_address
-                    result["contract_type"] = "SiloConfig or Silo"
-                except Exception:
-                    pass
-                
-                # Пытаемся проверить, это Silo или нет
-                try:
-                    total_assets = contract.functions.totalAssets().call()
-                    result["properties"]["totalAssets"] = total_assets
-                    result["contract_type"] = "Silo"
-                except Exception:
-                    pass
-                
-                # Пытаемся вызвать различные методы, чтобы определить, какие есть у контракта
-                methods_to_check = [
-                    "getSilo", "silos", "getSilos", "getStandardSilo", "getProtectedSilo",
-                    "totalAssets", "totalSupply", "getAllMarkets", "getMarkets", "getNextSiloId",
-                    "isSilo"
-                ]
-                
-                for method_name in methods_to_check:
-                    try:
-                        method = contract.get_function_by_name(method_name)
-                        result["methods"].append(method_name)
-                    except Exception:
-                        pass
-                
-                # Если нашли какие-то методы, останавливаемся на этом
-                if result["methods"]:
-                    break
-                    
-            except Exception as e:
-                logger.debug(f"Ошибка при проверке контракта с ABI {abi_file}: {str(e)}")
-        
-        # Если не нашли никаких методов, пробуем использовать общие ERC20 вызовы
-        if not result["methods"] and not result["properties"]:
-            # Возможно, это простой EOA (обычный аккаунт, не контракт)
-            try:
-                balance = w3.eth.get_balance(silo_config_address)
-                result["contract_type"] = "EOA (not a contract)"
-                result["properties"]["balance"] = w3.from_wei(balance, 'ether')
-            except Exception:
-                pass
-        
-        return result
-        
-    except Exception as e:
-        logger.error(f"Ошибка при инспектировании контракта: {str(e)}")
-        return {"error": str(e)}
+    if 'aave' in protocol.lower():
+        return AaveOperator(network, protocol)
+    elif 'lendle' in protocol.lower():
+        return LendleOperator(network, protocol)
+    elif 'compound-v3' in protocol.lower():
+        return CompoundOperator(network, protocol)
+    elif 'silo' in protocol.lower():
+        market_id = kwargs.get('market_id')
+        return SiloOperator(network, market_id)
+    elif 'curve' in protocol.lower():
+        pool_name = kwargs.get('pool_name')
+        return CurveOperator(network, pool_name)
+    elif 'uniswap' in protocol.lower():
+        return UniswapV3Operator(network, protocol)
+    else:
+        raise ValueError(f"Unsupported protocol: {protocol}")
+
+
+
 
 def main():
-    try:
-        print("Step 3.10: Testing SiloOperator for market 8")
-        
-        # Create operator for market 8
-        silo_operator = SiloOperator(network="Sonic", market_id="8")
-        
-        # Get list of Silos for the market
-        silos = silo_operator.find_silos_for_market("8")
-        print(f"\nFound Silos for market 8:")
-        print(json.dumps(silos, indent=2))
-        
-        # Get detailed information for each Silo
-        for silo_info in silos:
-            silo_address = silo_info["silo_address"]
-            print(f"\nInformation about Silo {silo_address}:")
-            silo_details = silo_operator.get_silo_info(silo_address)
-            print(json.dumps(silo_details, indent=2))
-            
-    except Exception as e:
-        logger.error(f"Error executing script: {str(e)}", exc_info=True)
-        print(f"\nERROR: {str(e)}")
-        return 1
-
+    compoud_operator = get_protocol_operator('Scroll', 'compound-v3')
+    print(compoud_operator.get_protocol_balance('USDC'))
+    
 if __name__ == "__main__":
     sys.exit(main())
