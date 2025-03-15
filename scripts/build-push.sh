@@ -14,6 +14,7 @@ fi
 
 # Configuration
 IMAGE_NAME="yieldex-data-collector"
+VERSION="0.2"
 TAG=$(date +%Y%m%d-%H%M%S)
 
 # Create and use new buildx builder
@@ -23,7 +24,7 @@ docker buildx create --use
 echo "Building production image..."
 docker buildx build --platform linux/amd64,linux/arm64 \
   -t $DOCKER_REGISTRY/$IMAGE_NAME:$TAG \
-  -t $DOCKER_REGISTRY/$IMAGE_NAME:latest \
+  -t $DOCKER_REGISTRY/$IMAGE_NAME:$VERSION \
   --push \
   -f Dockerfile-data-collector .
 
@@ -35,4 +36,5 @@ docker buildx build --platform linux/amd64,linux/arm64 \
   -f Dockerfile-test .
 
 echo "Built and pushed: $DOCKER_REGISTRY/$IMAGE_NAME:$TAG (production)"
+echo "Built and pushed: $DOCKER_REGISTRY/$IMAGE_NAME:$VERSION (version $VERSION)"
 echo "Built and pushed: $DOCKER_REGISTRY/$IMAGE_NAME:test (test)" 

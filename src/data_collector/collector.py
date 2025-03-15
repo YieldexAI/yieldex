@@ -82,7 +82,7 @@ def fetch_pools() -> List[Dict]:
         white_lists = get_white_lists()
         filtered_pools = [
             pool for pool in data
-            if pool['project'] in white_lists['protocols'] and pool['symbol'] in white_lists['tokens']
+            if pool['symbol'] in white_lists['tokens']
         ]
         
         # Add detailed logging for found pools
@@ -112,14 +112,23 @@ def save_apy_data(pools: List[Dict]):
             base_id = f"{pool['symbol']}_{pool['chain']}_{pool['project']}"
             pool_id = f"{base_id}_{pool['poolMeta']}" if pool.get('poolMeta') else base_id
             
-            records[pool_id] = {
+            record = {
                 "pool_id": pool_id,
                 "asset": pool['symbol'],
                 "chain": pool['chain'],
-                "apy": pool['apy'],
-                "tvl": pool['tvlUsd'],
-                "timestamp": current_time
+                "apy": pool.get('apy', 0),
+                "tvl": pool.get('tvlUsd', 0),
+                "timestamp": current_time,
+                "apy_base": pool.get('apyBase', 0),
+                "apy_reward": pool.get('apyReward', 0),
+                "apy_mean_30d": pool.get('apyMean30d', 0),
+                "apy_change_1d": pool.get('apyPct1D', 0),
+                "apy_change_7d": pool.get('apyPct7D', 0),
+                "apy_change_30d": pool.get('apyPct30D', 0),
+                "data_source": "Defillama"
             }
+            
+            records[pool_id] = record
             logger.debug(f"Prepared record for {pool_id}")
         
         logger.info(f"Attempting to save {len(records)} records to database...")

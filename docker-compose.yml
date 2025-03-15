@@ -11,7 +11,6 @@ services:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
       # Optional variables with default values
-      - WHITE_LIST_PROTOCOLS=${WHITE_LIST_PROTOCOLS:-aave-v3,aave-v2,lendle,venus-core-pool}
       - WHITE_LIST_TOKENS=${WHITE_LIST_TOKENS:-USDT,USDC,DAI,GHO,AUSD,TUSD,USD₮0,FRAX,LUSD}
     volumes:
       # Mount directories for data persistence
