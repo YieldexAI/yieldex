@@ -60,3 +60,6 @@ local_settings.py
 .env.local
 
 AI_DOCS/
+
+
+.cursor/
