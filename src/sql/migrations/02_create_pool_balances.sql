@@ -1,7 +1,7 @@
 create table if not exists pool_balances (
     id uuid default uuid_generate_v4() primary key,
     pool_id text not null references apy_history(pool_id),
-    position_balance numeric(20,2) not null,  -- Pool balance (in USD)
+    position_balance numeric not null,  -- Pool balance (in USD)
     timestamp bigint not null,       -- Data update timestamp
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null,

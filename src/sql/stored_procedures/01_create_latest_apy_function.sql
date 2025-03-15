@@ -5,10 +5,11 @@ returns table (
     chain text,
     apy numeric,
     tvl numeric,
+    is_tweeted boolean,
     apy_timestamp bigint
 ) as $$
     select distinct on (pool_id) 
-        pool_id, asset, chain, apy, tvl, timestamp as apy_timestamp
+        pool_id, asset, chain, apy, tvl, is_tweeted, timestamp as apy_timestamp
     from apy_history
     order by pool_id, timestamp desc
 $$ language sql stable;

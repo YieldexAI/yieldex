@@ -6,6 +6,8 @@ create table if not exists apy_history (
     timestamp bigint not null,
     pool_id text not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    tvl numeric,
+    is_tweeted boolean default false,
     
     constraint apy_history_unique_pool_timestamp unique (pool_id, timestamp)
 );
