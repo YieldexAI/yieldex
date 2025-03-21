@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, List
 from enum import Enum
 from web3 import Web3
 from web3.contract import Contract
+import time
 
 # Добавляем путь к корню проекта для импортов
 current_dir = Path(__file__).parent
@@ -17,6 +18,8 @@ from src.common.utils import get_token_address
 from src.common.config import (PRIVATE_KEY, RPC_URLS, STABLECOINS, 
                      SUPPORTED_PROTOCOLS, BLOCK_EXPLORERS, YIELDEX_ORACLE_ADDRESS,
                      SILO_MARKETS, SILO_VAULTS, COMPOUND_ADDRESSES, RHO_ADDRESSES)
+
+from src.analytics.analyzer import get_recommendations, format_recommendations
 
 # Configure logging
 logging.basicConfig(
@@ -59,7 +62,7 @@ class BaseProtocolOperator:
                 'uniswap-v3': 'UniswapV3Router.json',
                 'silo-v2': 'SiloFactory.json',
                 'compound-v3': 'CompoundComet.json',
-                'rho': 'ERC20-rhoMarket.json'
+                'rho-markets': 'ERC20-rhoMarket.json'
             }
             
             
@@ -80,7 +83,7 @@ class BaseProtocolOperator:
                 abi = json.load(f)
                 logger.info(f"ABI loaded: {abi_path}")
 
-            if self.protocol == 'rho':
+            if self.protocol == 'rho-markets':
                 self.contract_address = RHO_ADDRESSES[self.network]['usdc']
             
             # Check if contract address is valid
@@ -2146,12 +2149,12 @@ class RhoOperator(BaseProtocolOperator):
 
             amount_wei = self._convert_to_wei(token_address, amount)
             
-            if balance < amount_wei:
-                raise ValueError(f"Insufficient balance: have {balance / 10 ** decimals}, need {amount_wei / 10 ** decimals}")
+            # if balance < amount_wei:
+            #     raise ValueError(f"Insufficient balance: have {balance / 10 ** decimals}, need {amount_wei / 10 ** decimals}")
             
             # Execute withdrawal
             tx_func = rho_market_contract.functions.redeem(
-                amount_wei,
+                balance, ## for DEMO PURPOSES withdraw all balance
             )
             
             return self._send_transaction(tx_func)
@@ -2211,7 +2214,6 @@ class CompoundOperator(BaseProtocolOperator):
         token_address = get_token_address(token, self.network)
         amount_wei = self._convert_to_wei(token_address, amount)
         
-        # Проверяем баланс
         # Create token contract
         with open(ABI_DIR / 'ERC20.json') as f:
             token_contract = self.w3.eth.contract(
@@ -2235,16 +2237,31 @@ class CompoundOperator(BaseProtocolOperator):
         ).call()
         
         if allowance < amount_wei:
+            # Увеличим апрув до amount_wei * 10 для будущих операций
             approve_tx = token_contract.functions.approve(
-                self.contract_address, amount_wei * 2  # С запасом
+                self.contract_address, amount_wei * 10  # Увеличил запас
             )
             
             approve_hash = self._send_transaction(approve_tx)
             logger.info(f"Approved {token} for Compound: {approve_hash}")
+            
+            # Добавим небольшую задержку после апрува
+            time.sleep(2)
         
         # Выполняем поставку токенов
-        supply_tx = self.contract.functions.supply(token_address, amount_wei)
-        return self._send_transaction(supply_tx)
+        try:
+            supply_tx = self.contract.functions.supply(token_address, amount_wei)
+            tx_hash = self._send_transaction(supply_tx)
+            logger.info(f"Supply transaction successful: {tx_hash}")
+            return tx_hash
+        except Exception as e:
+            logger.error(f"Supply transaction failed: {str(e)}")
+            # Проверим allowance после ошибки
+            current_allowance = token_contract.functions.allowance(
+                self.account.address, self.contract_address
+            ).call()
+            logger.error(f"Current allowance after error: {current_allowance}")
+            raise
     
     def withdraw(self, token: str, amount: float) -> str:
         """Withdraw tokens from Compound protocol"""
@@ -2296,7 +2313,7 @@ def get_protocol_operator(network: str, protocol: str, **kwargs):
             return CurveOperator(network, pool_name)
         elif protocol == 'uniswap-v3':
             return UniswapV3Operator(network, protocol)
-        elif protocol == 'rho':
+        elif protocol == 'rho-markets':
             return RhoOperator(network, protocol)
         else:
             available_protocols = list(SUPPORTED_PROTOCOLS.keys())
@@ -2314,21 +2331,27 @@ def main():
     # print(compoud_operator.get_protocol_balance('USDC'))
 
     # compoud_operator.supply('USDC', 5)
-    # compoud_operator.withdraw('USDC', 5)
+    # compoud_operator.withdraw('USDC', 0.5)
 
-    # aave_operator = get_protocol_operator('Scroll', 'aave-v3')
-    # print(aave_operator.supply('USDC', 5))
+    aave_operator = get_protocol_operator('Scroll', 'aave-v3')
+    print(aave_operator.supply('USDC', 10))
     # rho_operator = get_protocol_operator('Scroll', 'rho')
     # print(rho_operator.supply('USDC', 5))
 
     # rho_operator.withdraw('USDC', 4.520983)
     # aave_operator.withdraw('USDC', 5)
 
-    uniswap_operator = get_protocol_operator('Scroll', 'uniswap-v3')
-    print(uniswap_operator)
-    uniswap_operator.withdraw('USDC', 0.3)
+    # aave_operator = get_protocol_operator('Scroll', 'aave-v3')
+    # print(aave_operator)
+    # aave_operator.supply('USDC', 10)
+
+    
+
+    # recommendations = get_recommendations(chain='Scroll', same_asset_only=True, min_profit=0.5, debug=False)
+    # print(format_recommendations(recommendations))
 
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

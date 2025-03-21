@@ -11,136 +11,117 @@ from web3.contract import Contract
 from web3.types import TxParams
 
 from common.utils import get_token_address
-
-from onchain.protocol_fabric import AaveOperator, UniswapV3Operator, SiloOperator, CurveOperator, LendleOperator, get_protocol_operator
-from src.analytics.analyzer import get_recommendations, format_recommendation, format_recommendations
-from src.common.config import (AAVE_V3_ADDRESSES, LENDLE_POOL_ADDRESS,
-                                PRIVATE_KEY, RPC_URLS)
-
-
-from src.onchain.protocol_fabric import SiloOperator, CollateralType
-from src.onchain.silo_demo import run_withdraw_flow, run_deposit_flow, display_market_info
-
-# Import and apply protocol decorators to enable DB tracking
-# try:
-#     from src.onchain.apply_decorators import apply_decorators
-#     # Apply decorators when this module is imported
-#     apply_decorators()
-#     logging.info("Applied protocol tracking decorators for DB synchronization")
-# except Exception as e:
-#     logging.warning(f"Failed to apply protocol tracking decorators: {str(e)}")
-#     logging.warning("DB synchronization for pool balances will not work")
+from onchain.protocol_fabric import get_protocol_operator
+from src.analytics.analyzer import (format_recommendation,
+                                    format_recommendations,
+                                    get_recommendations)
+from src.onchain.protocol_fabric import CollateralType, SiloOperator
 
 logger = logging.getLogger(__name__)
-ABI_DIR = Path(__file__).parent / "abi"
 
-class ERC20Utils:
-    """Utility class for working with ERC-20 tokens"""
+class RecommendationExecutor:
+    """Class for executing different types of recommendation flows"""
     
-    def __init__(self, network: str):
-        self.network = network
-        self.w3 = Web3(Web3.HTTPProvider(RPC_URLS.get(network)))
+    def __init__(self, recommendation: dict):
+        self.recommendation = recommendation
+        self.type = recommendation.get('recommendation_type')
+        self.from_chain = recommendation.get('from_chain')
+        self.to_chain = recommendation.get('to_chain')
+        self.asset = recommendation.get('asset')
+        self.to_asset = recommendation.get('to_asset')
+        self.amount = recommendation.get('position_size')
+        self.from_protocol = recommendation.get('from_protocol')
+        self.to_protocol = recommendation.get('to_protocol')
         
-        if not self.w3.is_connected():
-            raise ConnectionError(f"Failed to connect to {network} RPC")
-            
-        self.account = self.w3.eth.account.from_key(PRIVATE_KEY)
+    def execute(self) -> Dict[str, str]:
+        """
+        Execute recommendation flow based on type
         
-    def _get_token_contract(self, token_address: str) -> Contract:
-        """Get ERC-20 token contract"""
-        if not Web3.is_checksum_address(token_address):
-            token_address = Web3.to_checksum_address(token_address)
-        return self.w3.eth.contract(
-            address=token_address,
-            abi=json.load(open(ABI_DIR / 'ERC20.json'))
-        )
-    
-    def _get_gas_params(self) -> Dict[str, Any]:
-        """Get gas parameters for different networks"""
-        base_params = {
-            'from': self.account.address,
-            'nonce': self.w3.eth.get_transaction_count(self.account.address),
-            'chainId': self.w3.eth.chain_id
-        }
-        
-        if self.network in ['Arbitrum', 'Optimism']:
-            # Increase gas limit for L2 networks
-            gas_price = self.w3.eth.gas_price
-            base_params['gasPrice'] = int(gas_price * 1.3)  # +30% to current gas price
+        Returns:
+            Dictionary with transaction hashes for each step
+        """
+        if self.type == 'standard_transfer':
+            if self.from_chain == self.to_chain and self.asset == self.to_asset:
+                return self._execute_same_chain_same_asset()
+            elif self.from_chain == self.to_chain:
+                return self._execute_same_chain_swap()
+            else:
+                return self._execute_cross_chain()
+        elif self.type == 'silo_market_transfer':
+            return self._execute_silo_market_transfer()
         else:
-            base_params['maxFeePerGas'] = self.w3.eth.gas_price
-            base_params['maxPriorityFeePerGas'] = self.w3.to_wei(1, 'gwei')
+            raise ValueError(f"Unknown recommendation type: {self.type}")
             
-        return base_params
-
-    def _send_transaction(self, tx_function) -> str:
-        """Universal method for sending transactions"""
+    def _execute_same_chain_same_asset(self) -> Dict[str, str]:
+        """Execute transfer between protocols on same chain with same asset"""
         try:
-            tx_params = self._get_gas_params()
+            logger.info(f"Executing same chain transfer: {self.asset} from {self.from_protocol} to {self.to_protocol}")
             
-            # Increase gas limit and add buffer
-            try:
-                estimated_gas = tx_function.estimate_gas(tx_params)
-                tx_params['gas'] = int(estimated_gas * 1.5)  # +50% to estimated gas
-            except Exception as e:
-                logger.warning(f"Failed to estimate gas, using default: {str(e)}")
-                tx_params['gas'] = 2000000  # Set safe default value
+            # Get source protocol operator
+            from_operator = get_protocol_operator(self.from_chain, self.from_protocol)
             
-            signed_tx = self.account.sign_transaction(
-                tx_function.build_transaction(tx_params)
-            )
+            # Withdraw from source protocol
+            withdraw_tx = from_operator.withdraw(self.asset, self.amount)
+            logger.info(f"Withdrawal successful: {withdraw_tx}")
             
-            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-            receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+            # Get target protocol operator
+            to_operator = get_protocol_operator(self.to_chain, self.to_protocol)
             
-            if receipt.status != 1:
-                raise Exception("Transaction reverted")
-                
-            return tx_hash.hex()
+            # Deposit to target protocol
+            deposit_tx = to_operator.supply(self.asset, self.amount)
+            logger.info(f"Deposit successful: {deposit_tx}")
+            
+            return {
+                'withdraw_tx': withdraw_tx,
+                'deposit_tx': deposit_tx,
+                'status': 'success'
+            }
             
         except Exception as e:
-            logger.error(f"Transaction failed: {str(e)}")
-            raise
-
-    def approve_token(self, token_address: str, spender_address: str, amount: float) -> str:
-        """Approve token for specified protocol contract"""
-        token_contract = self._get_token_contract(token_address)
-        decimals = token_contract.functions.decimals().call()
-        amount_wei = int(amount * 10 ** decimals)
-        
-        tx_func = token_contract.functions.approve(spender_address, amount_wei)
-        return self._send_transaction(tx_func)
-        
-    def get_balance(self, token_address: str) -> float:
-        """Get token balance for current account"""
+            logger.error(f"Failed to execute same chain transfer: {str(e)}")
+            return {'status': 'failed', 'error': str(e)}
+    
+    def _execute_same_chain_swap(self) -> Dict[str, str]:
+        """Execute swap and transfer on same chain"""
         try:
-            # Check connection
-            if not self.w3.is_connected():
-                raise ConnectionError(f"Not connected to {self.network}")
-            
-            # Check if address is valid
-            if not Web3.is_checksum_address(token_address):
-                token_address = Web3.to_checksum_address(token_address)
-            
-            # Check if contract code exists at address
-            if self.w3.eth.get_code(token_address) == b'':
-                raise ValueError(f"No contract at address {token_address}")
-            
-            token_contract = self._get_token_contract(token_address)
-            
-            # Check if we can call decimals()
-            try:
-                decimals = token_contract.functions.decimals().call()
-            except Exception as e:
-                logger.error(f"Failed to get decimals: {str(e)}")
-                raise
-            
-            balance_wei = token_contract.functions.balanceOf(self.account.address).call()
-            return balance_wei / 10 ** decimals
+            # Use existing implementation
+            return execute_uniswap_flow({
+                'from_chain': self.from_chain,
+                'asset': self.asset,
+                'to_asset': self.to_asset,
+                'position_size': self.amount
+            })
             
         except Exception as e:
-            logger.error(f"Failed to get balance for {token_address}: {str(e)}")
-            raise
+            logger.error(f"Failed to execute same chain swap: {str(e)}")
+            return {'status': 'failed', 'error': str(e)}
+    
+    def _execute_cross_chain(self) -> Dict[str, str]:
+        """Execute cross-chain transfer"""
+        raise NotImplementedError("Cross-chain transfers are not yet implemented")
+    
+    def _execute_silo_market_transfer(self) -> Dict[str, str]:
+        """Execute transfer between Silo markets"""
+        try:
+            # Extract additional Silo-specific fields from recommendation
+            from_market = self.recommendation.get('from_market_id')
+            to_market = self.recommendation.get('to_market_id')
+            
+            if not all([from_market, to_market]):
+                raise ValueError("Missing required Silo market IDs in recommendation")
+            
+            # Use existing implementation but with our class fields
+            return execute_silo_market_transfer({
+                'asset': self.asset,
+                'from_chain': self.from_chain,
+                'from_market_id': from_market,
+                'to_market_id': to_market,
+                'position_size': self.amount
+            })
+            
+        except Exception as e:
+            logger.error(f"Failed to execute Silo market transfer: {str(e)}")
+            return {'status': 'failed', 'error': str(e)}
 
 def execute_uniswap_flow(recommendation: dict):
     """Execute full swap flow using Uniswap V3"""
@@ -153,7 +134,7 @@ def execute_uniswap_flow(recommendation: dict):
         logger.info(f"Starting Uniswap flow for {amount} {asset} on {chain}")
         
         # Initialize operator and check token support
-        aave_operator = AaveOperator(chain, 'aave-v3')
+        aave_operator = get_protocol_operator(chain, 'aave-v3')
         token_address = get_token_address(asset, chain)
         
         if not aave_operator._check_token_support(token_address):
@@ -164,7 +145,7 @@ def execute_uniswap_flow(recommendation: dict):
         logger.info(f"Withdrawal successful: {withdraw_tx}")
         
         # Execute swap
-        uniswap_operator = UniswapV3Operator(chain, 'uniswap-v3')
+        uniswap_operator = get_protocol_operator(chain, 'uniswap-v3')
         swap_tx = uniswap_operator.swap(asset, to_asset, amount, 0.1)
         logger.info(f"Swap successful: {swap_tx}")
 
@@ -199,9 +180,10 @@ def execute_silo_market_transfer(recommendation: dict):
         logger.info(f"Executing Silo market transfer: {asset} from market {from_market} to market {to_market} on {chain}")
         
         # Import modules from our project
-        from src.onchain.protocol_fabric import SiloOperator, CollateralType
-        from src.onchain.silo_demo import run_withdraw_flow, run_deposit_flow, display_market_info
-        
+        from src.onchain.protocol_fabric import CollateralType, SiloOperator
+        from src.onchain.silo_demo import (display_market_info,
+                                           run_deposit_flow, run_withdraw_flow)
+
         # Display information about both markets before transfer
         logger.info(f"Source market {from_market} information before transfer:")
         source_operator = SiloOperator(chain, from_market)
@@ -401,17 +383,32 @@ def execute_silo_market_transfer(recommendation: dict):
         return {"status": "failed", "reason": str(e)}
 
 if __name__ == "__main__":
-    recommendations = get_recommendations(
-        chain='Scroll',
-        same_asset_only=True,
-        min_profit=0.5,
-        debug=True
-    )
 
-    
-    # Или вывести отдельную рекомендацию
-    for recommendation in recommendations:
-        print(format_recommendation(recommendation))
+    # aave_operator = get_protocol_operator('Scroll', 'aave-v3')
+    # # print(aave_operator.get_protocol_balance('USDC'))
+    # aave_operator.supply('USDC', 10)
+
+    # Получаем рекомендации
+    recommendations = get_recommendations(chain='Scroll', same_asset_only=True)
+
+    # Выбираем рекомендацию для исполнения
+    recommendation = recommendations[0]
+
+    print(format_recommendation(recommendation))
+
+    recommendation['from_protocol'] = 'compound-v3'
+    recommendation['to_protocol'] = 'aave-v3'
+    print(format_recommendation(recommendation))
+
+    # Создаем исполнителя и запускаем
+    executor = RecommendationExecutor(recommendation)
+    result = executor.execute()
+
+    # Проверяем результат
+    if result['status'] == 'success':
+        print(f"Successfully executed: {result}")
+    else:
+        print(f"Execution failed: {result['error']}")
 
 
 
