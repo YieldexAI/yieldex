@@ -253,7 +253,8 @@ AAVE_V3_ADDRESSES = {
     'Arbitrum': '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
     'Optimism': '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
     'Base': '0xA238Dd80C259a72e81d7e4664a9801593F98d1c5',
-    'Mantle': '0xCFa5aE7c2CE8Fadc6426C1ff872cA45378Fb7cF3'  # Lendle
+    'Mantle': '0xCFa5aE7c2CE8Fadc6426C1ff872cA45378Fb7cF3',  # Lendle
+    'Scroll': '0x11fCfe756c05AD438e312a7fd934381537D3cFfe'
 }
 
 AAVE_V2_ADDRESSES = {
@@ -336,6 +337,13 @@ COMPOUND_ADDRESSES = {
     'Scroll': '0xB2f97c1Bd3bf02f5e74d13f02E3e26F93D77CE44'
 }
 
+RHO_ADDRESSES = {
+    'Scroll': {
+        'usdc': '0xAE1846110F72f2DaaBC75B7cEEe96558289EDfc5',
+        'usdt': '0x855CEA8626Fa7b42c13e7A688b179bf61e6c1e81'
+    }
+}
+
 
 SUPPORTED_PROTOCOLS = {
     'aave-v3': AAVE_V3_ADDRESSES,
@@ -345,7 +353,8 @@ SUPPORTED_PROTOCOLS = {
     'curve': CURVE_POOLS,
     'uniswap-v3': UNISWAP_V3_ROUTER,
     'silo-v2': SILOS_ADDRESSES,
-    'compound-v3': COMPOUND_ADDRESSES
+    'compound-v3': COMPOUND_ADDRESSES,
+    'rho': RHO_ADDRESSES,
 }
 
 YIELDEX_ORACLE_ABI = 'YieldexOracle.sol'

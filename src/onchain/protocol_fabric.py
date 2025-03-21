@@ -16,7 +16,7 @@ sys.path.insert(0, str(project_root))
 from src.common.utils import get_token_address
 from src.common.config import (PRIVATE_KEY, RPC_URLS, STABLECOINS, 
                      SUPPORTED_PROTOCOLS, BLOCK_EXPLORERS, YIELDEX_ORACLE_ADDRESS,
-                     SILO_MARKETS, SILO_VAULTS, COMPOUND_ADDRESSES)
+                     SILO_MARKETS, SILO_VAULTS, COMPOUND_ADDRESSES, RHO_ADDRESSES)
 
 # Configure logging
 logging.basicConfig(
@@ -38,7 +38,12 @@ class BaseProtocolOperator:
         if not self.w3.is_connected():
             raise ConnectionError(f"Failed to connect to {network} RPC")
             
-        self.contract_address = SUPPORTED_PROTOCOLS[protocol][network]
+        try:
+            self.contract_address = SUPPORTED_PROTOCOLS[protocol][network]
+        except KeyError:
+            available_networks = list(SUPPORTED_PROTOCOLS[protocol].keys())
+            raise ValueError(f"{protocol} contracts not found on {network}. Available on: {', '.join(available_networks)}")
+        
         self.contract = self._load_contract()
         self.account = self.w3.eth.account.from_key(PRIVATE_KEY)
         self.explorer_url = BLOCK_EXPLORERS.get(self.network)
@@ -53,7 +58,8 @@ class BaseProtocolOperator:
                 'yieldex-oracle': 'YieldexOracle.json',
                 'uniswap-v3': 'UniswapV3Router.json',
                 'silo-v2': 'SiloFactory.json',
-                'compound-v3': 'CompoundComet.json'
+                'compound-v3': 'CompoundComet.json',
+                'rho': 'ERC20-rhoMarket.json'
             }
             
             
@@ -73,6 +79,9 @@ class BaseProtocolOperator:
             with open(abi_path) as f:
                 abi = json.load(f)
                 logger.info(f"ABI loaded: {abi_path}")
+
+            if self.protocol == 'rho':
+                self.contract_address = RHO_ADDRESSES[self.network]['usdc']
             
             # Check if contract address is valid
             if not Web3.is_checksum_address(self.contract_address):
@@ -171,7 +180,7 @@ class BaseProtocolOperator:
                         raise Exception("Transaction reverted")
                         
                     tx_hash_hex = tx_hash.hex()
-                    logger.info(f"Transaction successful: {tx_hash_hex}")
+                    logger.info(f'Transaction successful: {self.explorer_url}/tx/0x{tx_hash_hex}')
                     
                     return f'{self.explorer_url}/tx/0x{tx_hash_hex}'
                     
@@ -308,7 +317,7 @@ class AaveOperator(BaseProtocolOperator):
         balance = token_contract.functions.balanceOf(self.account.address).call()
         balance_human = balance / 10**decimals
         
-        logger.info(f"Current balance: {balance_human} {token}")
+        logger.info(f"Current wallet balance: {balance_human} {token}")
         logger.info(f"Attempting to supply: {amount} {token}")
         
         if balance < amount_wei:
@@ -380,7 +389,7 @@ class AaveOperator(BaseProtocolOperator):
             # Use direct call() as in get_balance
             decimals = atoken_contract.functions.decimals().call()
             balance = atoken_contract.functions.balanceOf(self.account.address).call()
-            logger.info(f"Current balance: {balance/10**decimals} {token}")
+            logger.info(f"Current wallet balance: {balance/10**decimals} {token}")
 
             amount_wei = self._convert_to_wei(token_address, amount)
             
@@ -543,6 +552,7 @@ class UniswapV3Operator(BaseProtocolOperator):
     QUOTER_ADDRESSES = {
         'Arbitrum': '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6',
         'Optimism': '0x7637DcE4704b41Bf52BF338C650Dc46A586f7cF38',
+        
     }
     
     # Available fee tiers in Uniswap V3
@@ -1520,7 +1530,7 @@ class SiloOperator(BaseProtocolOperator):
             balance = token_contract.functions.balanceOf(self.account.address).call()
             balance_human = balance / 10**decimals
             
-            logger.info(f"Current balance: {balance_human} {token}")
+            logger.info(f"Current wallet balance: {balance_human} {token}")
             logger.info(f"Attempting to supply: {amount} {token}")
             
             amount_wei = int(amount * 10**decimals)
@@ -2064,6 +2074,92 @@ class SiloOperator(BaseProtocolOperator):
             }
 
 
+class RhoOperator(BaseProtocolOperator):
+    """Class for working with Rho protocol"""
+    
+    def supply(self, token: str, amount: float) -> str:
+        """Supply tokens to Rho protocol"""
+        token_address = get_token_address(token, self.network)
+        amount_wei = self._convert_to_wei(token_address, amount)
+        
+        # Проверяем баланс
+        # Create token contract
+        with open(ABI_DIR / 'ERC20.json') as f:
+            token_contract = self.w3.eth.contract(
+                address=token_address,
+                abi=json.load(f)
+            )
+        
+        decimals = token_contract.functions.decimals().call()
+        balance = token_contract.functions.balanceOf(self.account.address).call()
+        balance_human = balance / 10**decimals
+        
+        logger.info(f"Current balance of {token}: {balance_human}")
+        
+        if balance < amount_wei:
+            logger.error(f"Insufficient {token} balance: {balance_human}, needed: {amount}")
+            raise ValueError(f"Insufficient {token} balance")
+        
+        rho_market_address = RHO_ADDRESSES[self.network][token.lower()]
+        
+        # Проверяем разрешение на использование токенов
+        allowance = token_contract.functions.allowance(
+            self.account.address, rho_market_address
+        ).call()
+
+
+        rho_market_contract = self.w3.eth.contract(
+            address=rho_market_address,
+            abi=json.load(open(ABI_DIR / 'ERC20-rhoMarket.json'))
+        )
+        
+        if allowance < amount_wei:
+            approve_tx = token_contract.functions.approve(
+                rho_market_address, amount_wei * 2  # С запасом
+            )
+            
+            approve_hash = self._send_transaction(approve_tx)
+            logger.info(f"Approved {token} for Rho: {approve_hash}")
+        
+        # Выполняем поставку токенов
+        supply_tx = rho_market_contract.functions.mint(amount_wei)
+        return self._send_transaction(supply_tx)
+    
+    def withdraw(self, token: str, amount: float) -> str:
+        """Withdraw funds from protocol"""
+        try:
+            token_address = get_token_address(token, self.network)
+            
+            # Check token support in pool
+            logger.info(f"Checking if token {token} ({token_address}) is supported in {self.network} pool")
+    
+            rho_market_address = RHO_ADDRESSES[self.network][token.lower()]
+            rho_market_contract = self.w3.eth.contract(
+                address=rho_market_address,
+                abi=json.load(open(ABI_DIR / 'ERC20-rhoMarket.json'))
+            )
+            
+            # Use direct call() as in get_balance
+            decimals = rho_market_contract.functions.decimals().call()
+            balance = rho_market_contract.functions.balanceOf(self.account.address).call()
+            logger.info(f"Current wallet balance: {balance/10**decimals} {token} in {self.protocol} {token} makret")
+
+            amount_wei = self._convert_to_wei(token_address, amount)
+            
+            if balance < amount_wei:
+                raise ValueError(f"Insufficient balance: have {balance / 10 ** decimals}, need {amount_wei / 10 ** decimals}")
+            
+            # Execute withdrawal
+            tx_func = rho_market_contract.functions.redeem(
+                amount_wei,
+            )
+            
+            return self._send_transaction(tx_func)
+            
+        except Exception as e:
+            logger.error(f"Withdrawal failed for {token} on {self.network}: {str(e)}")
+            raise
+
 class CompoundOperator(BaseProtocolOperator):
     """Class for working with Compound III protocol"""
     
@@ -2184,37 +2280,55 @@ class CompoundOperator(BaseProtocolOperator):
 def get_protocol_operator(network: str, protocol: str, **kwargs):
     """
     Factory function to get the appropriate protocol operator
-    
-    Args:
-        network: Blockchain network name
-        protocol: Protocol name
-        
-    Returns:
-        Protocol operator instance
     """
-    if 'aave' in protocol.lower():
-        return AaveOperator(network, protocol)
-    elif 'lendle' in protocol.lower():
-        return LendleOperator(network, protocol)
-    elif 'compound-v3' in protocol.lower():
-        return CompoundOperator(network, protocol)
-    elif 'silo' in protocol.lower():
-        market_id = kwargs.get('market_id')
-        return SiloOperator(network, market_id)
-    elif 'curve' in protocol.lower():
-        pool_name = kwargs.get('pool_name')
-        return CurveOperator(network, pool_name)
-    elif 'uniswap' in protocol.lower():
-        return UniswapV3Operator(network, protocol)
-    else:
-        raise ValueError(f"Unsupported protocol: {protocol}")
+    try:
+        if protocol == 'aave-v3':
+            return AaveOperator(network, protocol)
+        elif protocol == 'lendle':
+            return LendleOperator(network, protocol)
+        elif protocol == 'compound-v3':
+            return CompoundOperator(network, protocol)
+        elif protocol == 'silo-v2':
+            market_id = kwargs.get('market_id')
+            return SiloOperator(network, market_id)
+        elif protocol == 'curve':
+            pool_name = kwargs.get('pool_name')
+            return CurveOperator(network, pool_name)
+        elif protocol == 'uniswap-v3':
+            return UniswapV3Operator(network, protocol)
+        elif protocol == 'rho':
+            return RhoOperator(network, protocol)
+        else:
+            available_protocols = list(SUPPORTED_PROTOCOLS.keys())
+            raise ValueError(f"Unknown protocol: {protocol}. Available: {', '.join(available_protocols)}")
+    except ValueError as e:
+        raise e  # Пробрасываем ошибку из BaseProtocolOperator без изменений
+    except Exception as e:
+        raise ValueError(f"Error initializing {protocol} on {network}: {str(e)}")
 
 
 
 
 def main():
-    compoud_operator = get_protocol_operator('Scroll', 'compound-v3')
-    print(compoud_operator.get_protocol_balance('USDC'))
-    
+    # compoud_operator = get_protocol_operator('Scroll', 'compound-v3')
+    # print(compoud_operator.get_protocol_balance('USDC'))
+
+    # compoud_operator.supply('USDC', 5)
+    # compoud_operator.withdraw('USDC', 5)
+
+    # aave_operator = get_protocol_operator('Scroll', 'aave-v3')
+    # print(aave_operator.supply('USDC', 5))
+    # rho_operator = get_protocol_operator('Scroll', 'rho')
+    # print(rho_operator.supply('USDC', 5))
+
+    # rho_operator.withdraw('USDC', 4.520983)
+    # aave_operator.withdraw('USDC', 5)
+
+    uniswap_operator = get_protocol_operator('Scroll', 'uniswap-v3')
+    print(uniswap_operator)
+    uniswap_operator.withdraw('USDC', 0.3)
+
+
+
 if __name__ == "__main__":
     sys.exit(main())

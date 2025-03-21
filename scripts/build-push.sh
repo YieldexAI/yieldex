@@ -14,7 +14,7 @@ fi
 
 # Configuration
 IMAGE_NAME="yieldex-data-collector"
-VERSION="0.2"
+VERSION="0.3"
 TAG=$(date +%Y%m%d-%H%M%S)
 
 # Create and use new buildx builder

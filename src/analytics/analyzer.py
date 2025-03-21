@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Tuple, Union, Any
 from common.config import SUPABASE_URL, SUPABASE_KEY
 from supabase import create_client
 import re
@@ -131,27 +131,49 @@ def extract_protocol_from_pool_id(pool_id):
     Extract protocol information from pool_id
     
     Args:
-        pool_id: The pool identifier string (e.g., 'USDC_Scroll_aave-v3')
+        pool_id: The pool identifier string (e.g., 'USDC_Scroll_aave-v3' or 'USDC_Scroll_rho-markets_Rho USDC Market')
         
     Returns:
         Protocol name or None if can't be determined
     """
     parts = pool_id.split('_')
     
+    # Special handling for Rho Markets
+    if 'rho-markets' in pool_id.lower():
+        return 'rho-markets'
+    
     # Typical format: asset_chain_protocol_extra
     if len(parts) >= 3:
         protocol = parts[2]
-        # Clean up any extra parts if needed
-        protocol = protocol.split('-')[0] if '-' in protocol else protocol
+        # Don't split protocol name for complex protocols
         return protocol
     
     # Try to identify known protocols in the string
-    known_protocols = ['aave', 'compound', 'curve', 'uniswap', 'sushiswap', 'balancer', 'yearn', 'silo']
+    known_protocols = ['aave', 'compound', 'curve', 'uniswap', 'sushiswap', 'balancer', 'yearn', 'silo', 'rho-markets']
     for protocol in known_protocols:
         if protocol in pool_id.lower():
             return protocol
     
     return None
+
+def normalize_protocol_name(protocol: str) -> str:
+    """
+    Normalize protocol name for comparison
+    
+    Args:
+        protocol: Protocol name from pool_id
+        
+    Returns:
+        Normalized protocol name
+    """
+    protocol = protocol.lower()
+    protocol_mapping = {
+        'rho': 'rho-markets',
+        'rhomarkets': 'rho-markets',
+        'rho-market': 'rho-markets',
+        'rhomarket': 'rho-markets',
+    }
+    return protocol_mapping.get(protocol.replace('-', ''), protocol)
 
 def get_latest_apy_data(chain=None):
     """
@@ -161,7 +183,7 @@ def get_latest_apy_data(chain=None):
         chain: Optional filter for specific blockchain network
         
     Returns:
-        Dictionary mapping asset_chain keys to APY data with special handling for Silo markets
+        Dictionary mapping pool_id to APY data with special handling for Silo markets
     """
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     
@@ -199,15 +221,20 @@ def get_latest_apy_data(chain=None):
                 apy_map[key] = entry
                 logger.info(f"Processed Silo market {market_id} for {entry['asset']} with APY: {entry['apy']}%")
         
-        # Standard handling for other protocols
+        # Use full pool_id as key
+        apy_map[pool_id] = entry
+        
+        # Also add standard key for backward compatibility
         standard_key = f"{entry['asset']}_{entry['chain']}"
         if standard_key not in apy_map:
             apy_map[standard_key] = entry
         
-        # Also add lowercase version for easier matching
+        # Also add lowercase versions for easier matching
+        apy_map[pool_id.lower()] = entry
         apy_map[standard_key.lower()] = entry
     
-    logger.info(f"Created APY map with {len(apy_map)} entries (including Silo markets)")
+    logger.info(f"Created APY map with {len(apy_map)} entries")
+    logger.debug(f"Available pools: {list(unique_pools)}")
     return apy_map
 
 def extract_market_id_from_pool_id(pool_id):
@@ -248,18 +275,44 @@ def extract_market_id_from_pool_id(pool_id):
     
     return None
 
-def get_recommendations(min_profit: float = 0.3, chain=None, show_all_comparisons: bool = False) -> List[Dict]:
+def get_recommendations(
+    min_profit: float = 0.3,
+    chain: Optional[str] = None,
+    show_all_comparisons: bool = False,
+    same_asset_only: bool = False,
+    debug: bool = False,
+    zero_threshold: bool = False
+) -> Union[List[Dict], Tuple[List[Dict], List[Dict]]]:
     """
     Analyze APY differences between different assets/chains/markets and generate recommendations
     
     Args:
-        min_profit: Minimum profit percentage to consider for a recommendation
+        min_profit: Minimum profit percentage to consider for a recommendation (default: 0.3)
         chain: Optional filter to only include positions from a specific chain
-        show_all_comparisons: Show all comparisons, even unprofitable ones
+        show_all_comparisons: Show all comparisons, even unprofitable ones (default: False)
+        same_asset_only: If True, only include recommendations that keep the same asset (default: False)
+        debug: Enable debug output (default: False)
+        zero_threshold: Set profit threshold to 0 to see all potential swaps (default: False)
         
     Returns:
-        List of recommendation dictionaries
+        If show_all_comparisons is False:
+            List of recommendation dictionaries
+        If show_all_comparisons is True:
+            Tuple of (recommendations, all_comparisons)
     """
+    if debug:
+        logger.setLevel(logging.DEBUG)
+        logging.getLogger('httpx').setLevel(logging.INFO)
+    
+    if zero_threshold:
+        min_profit = 0
+    
+    logger.info(f"Getting recommendations with the following filters:")
+    logger.info(f"  - Minimum profit: {min_profit}%")
+    if chain:
+        logger.info(f"  - Chain: {chain}")
+    if same_asset_only:
+        logger.info(f"  - Same asset only: Yes (no asset swaps)")
     logger.info("Starting get_recommendations")
     
     # Get current positions
@@ -294,6 +347,7 @@ def get_recommendations(min_profit: float = 0.3, chain=None, show_all_comparison
             
             # Get protocol information
             from_protocol = extract_protocol_from_pool_id(pool_id)
+            from_protocol = normalize_protocol_name(from_protocol) if from_protocol else None
             
             # Special handling for Silo markets
             is_silo = 'silo' in pool_id.lower()
@@ -397,24 +451,41 @@ def get_recommendations(min_profit: float = 0.3, chain=None, show_all_comparison
             
             # Standard comparison with other assets/chains
             if best_profit < min_profit:  # Only if we haven't found good Silo market transfer
+                logger.info(f"Looking for better opportunities for {asset} in {position_chain} (current APY: {current_apy}%)")
+                
                 for key, data in apy_map.items():
                     # Skip Silo market-specific entries for standard comparison
                     if 'market_' in key:
                         continue
-                        
+                    
+                    pool_id = data.get('pool_id', '')
                     target_asset = data.get('asset')
                     target_chain = data.get('chain')
+                    target_protocol = extract_protocol_from_pool_id(pool_id)
+                    target_protocol = normalize_protocol_name(target_protocol) if target_protocol else None
+                    
+                    logger.debug(f"Checking pool: {pool_id} ({target_protocol})")
                     
                     # Skip if missing data
-                    if not target_asset or not target_chain:
+                    if not target_asset or not target_chain or not target_protocol:
+                        logger.debug(f"Skipping due to missing data: asset={target_asset}, chain={target_chain}, protocol={target_protocol}")
                         continue
                     
-                    # Skip if same asset and chain
-                    if target_asset == asset and target_chain == position_chain:
+                    # Skip if same asset, chain and protocol
+                    if (target_asset == asset and 
+                        target_chain == position_chain and 
+                        target_protocol == from_protocol):
+                        logger.debug(f"Skipping same protocol: {target_protocol}")
                         continue
                     
                     # Skip if chain filter applied and doesn't match
                     if chain and target_chain.lower() != chain.lower():
+                        logger.debug(f"Skipping different chain: {target_chain}")
+                        continue
+                    
+                    # Skip if requesting same asset only and target asset is different
+                    if same_asset_only and target_asset != asset:
+                        logger.info(f"Skipping {target_asset} because only same asset transfers requested (current asset: {asset})")
                         continue
                     
                     target_apy = data['apy']
@@ -428,8 +499,10 @@ def get_recommendations(min_profit: float = 0.3, chain=None, show_all_comparison
                     comparison = {
                         'from_asset': asset,
                         'from_chain': position_chain,
+                        'from_protocol': from_protocol,
                         'to_asset': target_asset,
                         'to_chain': target_chain,
+                        'to_protocol': target_protocol,
                         'from_apy': current_apy,
                         'to_apy': target_apy,
                         'gas_cost': gas_cost,
@@ -438,10 +511,11 @@ def get_recommendations(min_profit: float = 0.3, chain=None, show_all_comparison
                     }
                     comparisons.append(comparison)
                     
-                    logger.info(f"Comparing {asset} on {position_chain} ({current_apy}%) → "
-                               f"{target_asset} on {target_chain} ({target_apy}%): Profit = {profit}%")
+                    logger.info(f"Comparing {asset} on {position_chain} ({from_protocol}, {current_apy}%) → "
+                               f"{target_asset} on {target_chain} ({target_protocol}, {target_apy}%): Profit = {profit}%")
                     
                     if profit > min_profit and profit > best_profit:
+                        logger.debug(f"Found better option: profit={profit}% > best_profit={best_profit}%")
                         best_profit = profit
                         best_option = {
                             'type': 'standard_transfer',
@@ -449,15 +523,19 @@ def get_recommendations(min_profit: float = 0.3, chain=None, show_all_comparison
                             'to_asset': target_asset,
                             'from_chain': position_chain,
                             'to_chain': target_chain,
+                            'from_protocol': from_protocol,
+                            'to_protocol': target_protocol,
                             'current_apy': current_apy,
                             'target_apy': target_apy,
                             'profit': profit,
                             'pool_id': pool_id,
                             'data': data
                         }
+                        logger.debug(f"Updated best_option: {best_option}")
             
             # Create final recommendation based on best option
             if best_option:
+                logger.debug(f"Creating recommendation from best_option: {best_option}")
                 if best_option['type'] == 'silo_market_transfer':
                     recommendation = {
                         'asset': asset,
@@ -484,30 +562,25 @@ def get_recommendations(min_profit: float = 0.3, chain=None, show_all_comparison
                         }
                     }
                 else:
-                    # Extract protocol from target pool if available
-                    to_protocol = None
-                    if 'pool_id' in best_option['data']:
-                        to_protocol = extract_protocol_from_pool_id(best_option['data']['pool_id'])
-                    
                     # Standard asset/chain transfer
                     recommendation = {
-                        'asset': asset,
+                        'asset': best_option['asset'],
                         'to_asset': best_option['to_asset'],
-                        'from_chain': position_chain,
+                        'from_chain': best_option['from_chain'],
                         'to_chain': best_option['to_chain'],
-                        'from_protocol': from_protocol,
-                        'to_protocol': to_protocol,
-                        'current_apy': round(current_apy, 2),
+                        'from_protocol': best_option['from_protocol'],
+                        'to_protocol': best_option['to_protocol'],
+                        'current_apy': round(best_option['current_apy'], 2),
                         'target_apy': round(best_option['target_apy'], 2),
-                        'gas_cost': 0.15 if best_option['to_chain'] != position_chain else 0.05,
+                        'gas_cost': 0.05,  # Fixed for same-chain transfers
                         'estimated_profit': round(best_option['profit'], 2),
                         'position_size': position_balance,
-                        'pool_id': pool_id,
+                        'pool_id': best_option['data']['pool_id'],  # Use correct pool_id from data
                         'recommendation_type': 'standard_transfer',
                         'swap_details': {
-                            'from_token': asset,
+                            'from_token': best_option['asset'],
                             'to_token': best_option['to_asset'],
-                            'swap_protocol': 'uniswap-v3' if best_option['to_chain'] != position_chain else 'curve'
+                            'swap_protocol': 'curve' if best_option['from_chain'] == best_option['to_chain'] else 'uniswap-v3'
                         }
                     }
                 
@@ -688,6 +761,64 @@ def get_chain_data(chain_name: str, limit: int = 100):
         .limit(limit) \
         .execute().data
 
+def format_recommendation(recommendation: Dict[str, Any], index: Optional[int] = None) -> str:
+    """
+    Format recommendation as a human-readable string
+    
+    Args:
+        recommendation: Dictionary with recommendation details
+        index: Optional index number for the recommendation
+        
+    Returns:
+        Formatted string representation of the recommendation
+    """
+    lines = []
+    
+    # Add index if provided
+    prefix = f"\n{index}. " if index is not None else "\n"
+    
+    if recommendation.get('recommendation_type') == 'silo_market_transfer':
+        lines.append(f"{prefix}Move {recommendation['asset']} from Market {recommendation['from_market_id']} "
+                    f"to Market {recommendation['to_market_id']} on {recommendation['to_chain']}")
+        lines.append(f"   Recommendation Type: Silo Market Transfer")
+        lines.append(f"   Protocol: {recommendation['from_protocol'].capitalize() if recommendation['from_protocol'] else 'Unknown'}")
+    else:
+        from_protocol = recommendation['from_protocol'].capitalize() if recommendation['from_protocol'] else 'Unknown'
+        to_protocol = recommendation['to_protocol'].capitalize() if recommendation['to_protocol'] else 'Unknown'
+        lines.append(f"{prefix}Move {recommendation['asset']} from {recommendation['from_chain']} "
+                    f"to {recommendation['to_asset']} on {recommendation['to_chain']}")
+        lines.append(f"   Recommendation Type: Cross-Asset/Chain Transfer")
+        lines.append(f"   From Protocol: {from_protocol} → To Protocol: {to_protocol}")
+    
+    lines.append(f"   Current APY: {recommendation['current_apy']}% → Target APY: {recommendation['target_apy']}%")
+    lines.append(f"   Estimated profit: {recommendation['estimated_profit']}% (after gas costs of {recommendation['gas_cost']}%)")
+    lines.append(f"   Position size: ${recommendation['position_size']}")
+    lines.append(f"   Original pool ID: {recommendation['pool_id']}")
+    
+    # Display target pool ID if available
+    if (recommendation.get('recommendation_type') == 'standard_transfer' and 
+        'data' in recommendation and 'pool_id' in recommendation['data']):
+        lines.append(f"   Target pool ID: {recommendation['data']['pool_id']}")
+    
+    return "\n".join(lines)
+
+def format_recommendations(recommendations: List[Dict[str, Any]]) -> str:
+    """
+    Format a list of recommendations as a human-readable string
+    
+    Args:
+        recommendations: List of recommendation dictionaries
+        
+    Returns:
+        Formatted string representation of all recommendations
+    """
+    if not recommendations:
+        return "No recommendations found."
+    
+    lines = [f"\nFound {len(recommendations)} recommendations:"]
+    for i, rec in enumerate(recommendations, 1):
+        lines.append(format_recommendation(rec, i))
+    return "\n".join(lines)
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -698,6 +829,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
     parser.add_argument('--show-all-comparisons', action='store_true', help='Show all comparisons including unprofitable ones')
     parser.add_argument('--zero-threshold', action='store_true', help='Set profit threshold to 0 to see all potential swaps')
+    parser.add_argument('--same-asset-only', action='store_true', help='Only show recommendations that keep the same asset (no USDT→USDC swaps)')
     
     args = parser.parse_args()
     
@@ -710,40 +842,30 @@ if __name__ == "__main__":
     if args.zero_threshold:
         args.min_profit = 0
     
+    # Log filtering options
+    logger.info(f"Getting recommendations with the following filters:")
+    logger.info(f"  - Minimum profit: {args.min_profit}%")
+    if args.chain:
+        logger.info(f"  - Chain: {args.chain}")
+    if args.same_asset_only:
+        logger.info(f"  - Same asset only: Yes (no asset swaps)")
+    
     # Get recommendations
     if args.show_all_comparisons:
         recommendations, all_comparisons = get_recommendations(
             min_profit=args.min_profit, 
             chain=args.chain,
-            show_all_comparisons=True
+            show_all_comparisons=True,
+            same_asset_only=args.same_asset_only
         )
     else:
         recommendations = get_recommendations(
             min_profit=args.min_profit, 
-            chain=args.chain
+            chain=args.chain,
+            same_asset_only=args.same_asset_only
         )
     
-    print(f"\nFound {len(recommendations)} recommendations:")
-    for i, rec in enumerate(recommendations, 1):
-        if rec.get('recommendation_type') == 'silo_market_transfer':
-            print(f"\n{i}. Move {rec['asset']} from Market {rec['from_market_id']} to Market {rec['to_market_id']} on {rec['to_chain']}")
-            print(f"   Recommendation Type: Silo Market Transfer")
-            print(f"   Protocol: {rec['from_protocol'].capitalize() if rec['from_protocol'] else 'Unknown'}")
-        else:
-            from_protocol = rec['from_protocol'].capitalize() if rec['from_protocol'] else 'Unknown'
-            to_protocol = rec['to_protocol'].capitalize() if rec['to_protocol'] else 'Unknown'
-            print(f"\n{i}. Move {rec['asset']} from {rec['from_chain']} to {rec['to_asset']} on {rec['to_chain']}")
-            print(f"   Recommendation Type: Cross-Asset/Chain Transfer")
-            print(f"   From Protocol: {from_protocol} → To Protocol: {to_protocol}")
-            
-        print(f"   Current APY: {rec['current_apy']}% → Target APY: {rec['target_apy']}%")
-        print(f"   Estimated profit: {rec['estimated_profit']}% (after gas costs of {rec['gas_cost']}%)")
-        print(f"   Position size: ${rec['position_size']}")
-        print(f"   Original pool ID: {rec['pool_id']}")
-        
-        # Display target pool ID if available
-        if rec.get('recommendation_type') == 'standard_transfer' and 'data' in rec and 'pool_id' in rec['data']:
-            print(f"   Target pool ID: {rec['data']['pool_id']}")
+    print(format_recommendations(recommendations))
     
     if args.show_all_comparisons:
         print("\n\n======= ALL COMPARISONS (FOR DEBUGGING) =======")

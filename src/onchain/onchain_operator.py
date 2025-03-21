@@ -12,14 +12,24 @@ from web3.types import TxParams
 
 from common.utils import get_token_address
 
-from onchain.protocol_fabric import AaveOperator, UniswapV3Operator, SiloOperator, CurveOperator, LendleOperator
-from src.analytics.analyzer import get_recommendations
+from onchain.protocol_fabric import AaveOperator, UniswapV3Operator, SiloOperator, CurveOperator, LendleOperator, get_protocol_operator
+from src.analytics.analyzer import get_recommendations, format_recommendation, format_recommendations
 from src.common.config import (AAVE_V3_ADDRESSES, LENDLE_POOL_ADDRESS,
                                 PRIVATE_KEY, RPC_URLS)
 
 
 from src.onchain.protocol_fabric import SiloOperator, CollateralType
 from src.onchain.silo_demo import run_withdraw_flow, run_deposit_flow, display_market_info
+
+# Import and apply protocol decorators to enable DB tracking
+# try:
+#     from src.onchain.apply_decorators import apply_decorators
+#     # Apply decorators when this module is imported
+#     apply_decorators()
+#     logging.info("Applied protocol tracking decorators for DB synchronization")
+# except Exception as e:
+#     logging.warning(f"Failed to apply protocol tracking decorators: {str(e)}")
+#     logging.warning("DB synchronization for pool balances will not work")
 
 logger = logging.getLogger(__name__)
 ABI_DIR = Path(__file__).parent / "abi"
@@ -391,19 +401,17 @@ def execute_silo_market_transfer(recommendation: dict):
         return {"status": "failed", "reason": str(e)}
 
 if __name__ == "__main__":
+    recommendations = get_recommendations(
+        chain='Scroll',
+        same_asset_only=True,
+        min_profit=0.5,
+        debug=True
+    )
+
     
-    # Правильный вызов с указанием имени параметра
-    recommendations = get_recommendations(chain='Sonic')
+    # Или вывести отдельную рекомендацию
     for recommendation in recommendations:
-        print(recommendation)
-        # Выбрать подходящую функцию выполнения в зависимости от типа рекомендации
-        if recommendation.get('recommendation_type') == 'silo_market_transfer':
-            # Раскомментируйте строку ниже, чтобы выполнить рекомендацию
-            result = execute_silo_market_transfer(recommendation)
-            print(f"Execution result: {result}")
-        else:
-            # execute_uniswap_flow(recommendation)
-            pass
+        print(format_recommendation(recommendation))
 
 
 
