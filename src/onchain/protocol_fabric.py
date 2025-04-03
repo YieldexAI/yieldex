@@ -17,7 +17,8 @@ sys.path.insert(0, str(project_root))
 from src.common.utils import get_token_address
 from src.common.config import (PRIVATE_KEY, RPC_URLS, STABLECOINS, 
                      SUPPORTED_PROTOCOLS, BLOCK_EXPLORERS, YIELDEX_ORACLE_ADDRESS,
-                     SILO_MARKETS, SILO_VAULTS, COMPOUND_ADDRESSES, RHO_ADDRESSES)
+                     SILO_MARKETS, SILO_VAULTS, COMPOUND_ADDRESSES, RHO_ADDRESSES,
+                     FLUID_ADDRESSES)
 
 from src.analytics.analyzer import get_recommendations, format_recommendations
 
@@ -62,7 +63,8 @@ class BaseProtocolOperator:
                 'uniswap-v3': 'UniswapV3Router.json',
                 'silo-v2': 'SiloFactory.json',
                 'compound-v3': 'CompoundComet.json',
-                'rho-markets': 'ERC20-rhoMarket.json'
+                'rho-markets': 'ERC20-rhoMarket.json',
+                'fluid': 'FluidLendingPool.json'  # Add Fluid ABI mapping
             }
             
             
@@ -2294,6 +2296,209 @@ class CompoundOperator(BaseProtocolOperator):
         return self._send_transaction(withdraw_tx)
     
 
+class FluidOperator(BaseProtocolOperator):
+    """Class for working with Fluid Finance lending protocol using ERC4626 standard"""
+    
+    def __init__(self, network: str):
+        """
+        Initialize Fluid operator
+        
+        Args:
+            network: Network name (e.g. 'Arbitrum')
+        """
+        # Сохраняем параметры
+        self.network = network
+        self.protocol = 'fluid'
+        
+        # Инициализируем web3 и аккаунт
+        self.w3 = Web3(Web3.HTTPProvider(RPC_URLS[network]))
+        self.account = self.w3.eth.account.from_key(PRIVATE_KEY)
+        
+        # Протокол определен при инициализации, но токен выбирается в момент операции
+        # Контрольный адрес только для инициализации базового класса
+        self.contract_address = FLUID_ADDRESSES[network]['USDC']  # Default address
+        self.contract = None  # Initialize later when needed
+        
+    def _get_token_contract(self, token: str):
+        """
+        Get the ERC4626 token contract for specified token
+        
+        Args:
+            token: Token symbol (e.g. 'USDC', 'USDT')
+        """
+        if token not in FLUID_ADDRESSES[self.network]:
+            raise ValueError(f"Unsupported token {token} for Fluid on {self.network}")
+        
+        contract_address = FLUID_ADDRESSES[self.network][token]
+        
+        # Load ABI
+        abi_path = ABI_DIR / 'FluidLendingPool.json'
+        with open(abi_path) as f:
+            abi = json.load(f)
+        
+        return self.w3.eth.contract(
+            address=Web3.to_checksum_address(contract_address),
+            abi=abi
+        )
+        
+    def supply(self, token: str, amount: float) -> str:
+        """
+        Supply tokens to Fluid protocol using ERC4626 deposit method
+        
+        Args:
+            token: Token symbol to deposit
+            amount: Amount of tokens to deposit
+            
+        Returns:
+            Transaction hash
+        """
+        try:
+            # Get the specific token contract for this operation
+            token_contract = self._get_token_contract(token)
+            
+            token_address = get_token_address(token, self.network)
+            amount_wei = self._convert_to_wei(token_address, amount)
+            
+            # Create ERC20 token contract
+            with open(ABI_DIR / 'ERC20.json') as f:
+                erc20_contract = self.w3.eth.contract(
+                    address=token_address,
+                    abi=json.load(f)
+                )
+            
+            # Get and log balance
+            decimals = erc20_contract.functions.decimals().call()
+            balance = erc20_contract.functions.balanceOf(self.account.address).call()
+            balance_human = balance / 10**decimals
+            
+            logger.info(f"Current balance of {token}: {balance_human}")
+            
+            if balance < amount_wei:
+                logger.error(f"Insufficient {token} balance: {balance_human}, needed: {amount}")
+                raise ValueError(f"Insufficient {token} balance")
+            
+            # Check allowance and approve if needed
+            contract_address = FLUID_ADDRESSES[self.network][token]
+            allowance = erc20_contract.functions.allowance(
+                self.account.address,
+                contract_address
+            ).call()
+            
+            if allowance < amount_wei:
+                approve_tx = erc20_contract.functions.approve(
+                    contract_address,
+                    amount_wei * 2  # Approve with buffer
+                )
+                approve_hash = self._send_transaction(approve_tx)
+                logger.info(f"Approved {token} for Fluid: {approve_hash}")
+            
+            # Call deposit function (ERC4626)
+            deposit_tx = token_contract.functions.deposit(
+                amount_wei,                # assets (amount to deposit)
+                self.account.address       # receiver (who gets the fToken shares)
+            )
+            
+            tx_hash = self._send_transaction(deposit_tx)
+            logger.info(f"Deposit transaction successful: {tx_hash}")
+            return tx_hash
+            
+        except Exception as e:
+            logger.error(f"Deposit failed: {str(e)}")
+            raise
+    
+    def withdraw(self, token: str, amount: float) -> str:
+        """
+        Withdraw tokens from Fluid protocol using ERC4626 withdraw method
+        
+        Args:
+            token: Token symbol to withdraw
+            amount: Amount of tokens to withdraw
+            
+        Returns:
+            Transaction hash
+        """
+        try:
+            # Get the specific token contract for this operation
+            token_contract = self._get_token_contract(token)
+            
+            token_address = get_token_address(token, self.network)
+            amount_wei = self._convert_to_wei(token_address, amount)
+            
+            # Get current share balance (fToken balance)
+            shares_balance = token_contract.functions.balanceOf(self.account.address).call()
+            
+            # Convert requested amount to shares
+            if amount > 0:
+                # Calculate how many shares we need to burn to get the requested assets
+                shares_needed = token_contract.functions.convertToShares(amount_wei).call()
+                if shares_needed > shares_balance:
+                    # If not enough shares, withdraw everything
+                    logger.warning(f"Requested amount exceeds available balance. Withdrawing maximum available.")
+                    shares_to_withdraw = shares_balance
+                    assets_to_receive = token_contract.functions.convertToAssets(shares_to_withdraw).call()
+                    amount_human = assets_to_receive / 10**self._get_token_decimals(token_address)
+                    logger.info(f"Will withdraw {amount_human} {token}")
+                else:
+                    # Withdraw exact amount requested
+                    shares_to_withdraw = shares_needed
+            else:
+                # If amount is 0 or negative, withdraw everything
+                shares_to_withdraw = shares_balance
+                assets_to_receive = token_contract.functions.convertToAssets(shares_to_withdraw).call()
+                amount_human = assets_to_receive / 10**self._get_token_decimals(token_address)
+                logger.info(f"Will withdraw all available: {amount_human} {token}")
+            
+            if shares_to_withdraw == 0:
+                logger.warning("No shares to withdraw")
+                return None
+            
+            # Execute withdrawal using redeem (burn shares to get assets)
+            withdraw_tx = token_contract.functions.redeem(
+                shares_to_withdraw,        # shares to burn
+                self.account.address,      # receiver of assets
+                self.account.address       # owner of shares
+            )
+            
+            tx_hash = self._send_transaction(withdraw_tx)
+            logger.info(f"Withdrawal transaction successful: {tx_hash}")
+            return tx_hash
+            
+        except Exception as e:
+            logger.error(f"Withdrawal failed: {str(e)}")
+            raise
+    
+    def get_balance(self, token: str) -> float:
+        """
+        Get current balance in the protocol (converted to underlying token amount)
+        
+        Args:
+            token: Token symbol to check balance for
+            
+        Returns:
+            Balance in human-readable format
+        """
+        try:
+            # Get the specific token contract for this operation
+            token_contract = self._get_token_contract(token)
+            
+            # Get share balance (fToken balance)
+            shares_balance = token_contract.functions.balanceOf(self.account.address).call()
+            
+            if shares_balance == 0:
+                return 0.0
+                
+            # Convert shares to assets (underlying token amount)
+            assets_balance = token_contract.functions.convertToAssets(shares_balance).call()
+            
+            token_address = get_token_address(token, self.network)
+            decimals = self._get_token_decimals(token_address)
+            
+            return assets_balance / 10**decimals
+            
+        except Exception as e:
+            logger.error(f"Error getting balance: {str(e)}")
+            return 0.0
+
 def get_protocol_operator(network: str, protocol: str, **kwargs):
     """
     Factory function to get the appropriate protocol operator
@@ -2315,11 +2520,13 @@ def get_protocol_operator(network: str, protocol: str, **kwargs):
             return UniswapV3Operator(network, protocol)
         elif protocol == 'rho-markets':
             return RhoOperator(network, protocol)
+        elif protocol == 'fluid':
+            return FluidOperator(network)  # Теперь не требует token параметр
         else:
             available_protocols = list(SUPPORTED_PROTOCOLS.keys())
             raise ValueError(f"Unknown protocol: {protocol}. Available: {', '.join(available_protocols)}")
     except ValueError as e:
-        raise e  # Пробрасываем ошибку из BaseProtocolOperator без изменений
+        raise e
     except Exception as e:
         raise ValueError(f"Error initializing {protocol} on {network}: {str(e)}")
 
@@ -2330,11 +2537,11 @@ def main():
     # compoud_operator = get_protocol_operator('Scroll', 'compound-v3')
     # print(compoud_operator.get_protocol_balance('USDC'))
 
-    # compoud_operator.supply('USDC', 5)
+    # compoud_operator.supply('USDC', 2)
     # compoud_operator.withdraw('USDC', 0.5)
 
-    aave_operator = get_protocol_operator('Scroll', 'aave-v3')
-    print(aave_operator.supply('USDC', 10))
+    # aave_operator = get_protocol_operator('Scroll', 'aave-v3')
+    # print(aave_operator.supply('USDC', 10))
     # rho_operator = get_protocol_operator('Scroll', 'rho')
     # print(rho_operator.supply('USDC', 5))
 
@@ -2345,7 +2552,33 @@ def main():
     # print(aave_operator)
     # aave_operator.supply('USDC', 10)
 
+    # Пример использования Fluid Finance на Arbitrum - теперь проще!
+    # Создаем один оператор для всех токенов
+    fluid = get_protocol_operator('Arbitrum', 'fluid')
     
+    # Проверяем текущие балансы разных токенов
+    usdc_balance = fluid.get_balance('USDC')
+    print(f"Current USDC balance in Fluid: {usdc_balance}")
+    
+    usdt_balance = fluid.get_balance('USDT')
+    print(f"Current USDT balance in Fluid: {usdt_balance}")
+    
+    # Примеры операций с разными токенами
+    # Депозит USDC
+    # tx_hash = fluid.supply('USDC', 100)
+    # print(f"USDC Deposit transaction hash: {tx_hash}")
+    
+    # Депозит USDT
+    # tx_hash = fluid.supply('USDT', 100)
+    # print(f"USDT Deposit transaction hash: {tx_hash}")
+    
+    # Вывод USDC
+    # tx_hash = fluid.withdraw('USDC', 50)
+    # print(f"USDC Withdrawal transaction hash: {tx_hash}")
+    
+    # Вывод USDT
+    # tx_hash = fluid.withdraw('USDT', 50)
+    # print(f"USDT Withdrawal transaction hash: {tx_hash}")
 
     # recommendations = get_recommendations(chain='Scroll', same_asset_only=True, min_profit=0.5, debug=False)
     # print(format_recommendations(recommendations))

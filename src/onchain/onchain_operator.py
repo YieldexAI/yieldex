@@ -384,31 +384,23 @@ def execute_silo_market_transfer(recommendation: dict):
 
 if __name__ == "__main__":
 
-    # aave_operator = get_protocol_operator('Scroll', 'aave-v3')
-    # # print(aave_operator.get_protocol_balance('USDC'))
-    # aave_operator.supply('USDC', 10)
 
-    # Получаем рекомендации
-    recommendations = get_recommendations(chain='Scroll', same_asset_only=True)
+    # Geting recommendations
+    recommendations = get_recommendations(chain='Arbitrum')
 
-    # Выбираем рекомендацию для исполнения
-    recommendation = recommendations[0]
+    # Selecting recommendation for execution
+    # recommendation = recommendations[0]
 
-    print(format_recommendation(recommendation))
+    print(format_recommendations(recommendations))
 
-    recommendation['from_protocol'] = 'compound-v3'
-    recommendation['to_protocol'] = 'aave-v3'
-    print(format_recommendation(recommendation))
+    # # Executing recommendation
+    # executor = RecommendationExecutor(recommendation)
+    # result = executor.execute()
 
-    # Создаем исполнителя и запускаем
-    executor = RecommendationExecutor(recommendation)
-    result = executor.execute()
-
-    # Проверяем результат
-    if result['status'] == 'success':
-        print(f"Successfully executed: {result}")
-    else:
-        print(f"Execution failed: {result['error']}")
+    # if result['status'] == 'success':
+    #     print(f"Successfully executed: {result}")
+    # else:
+    #     print(f"Execution failed: {result['error']}")
 
 
 

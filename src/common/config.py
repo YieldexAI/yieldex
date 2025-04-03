@@ -175,31 +175,27 @@ logger.info(f"Telegram Thread ID: {TELEGRAM_THREAD_ID}")
 
 # Configuration of addresses for all supported stablecoins
 STABLECOINS = {
-
-    'USD₮0': {
-        'Arbitrum': '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
-    },
     'USDT': {
         'Polygon': '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
-        'Arbitrum': '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
+        'Arbitrum': '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
         'Optimism': '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58',
-        'Base': None,  # USDC on Base, USDT not available yet
+        'Base': '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb',
         'Avalanche': '0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7',
         'Ethereum': '0xdAC17F958D2ee523a2206206994597C13D831ec7',
         'Mantle': '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE'
     },
     'USDC': {
-        'Polygon': '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-        'Arbitrum': '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+        'Polygon': '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+        'Arbitrum': '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',  # Native USDC
         'Optimism': '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
-        'Base': '0x833589fCD6eDb6E08B4DF7441424273dE8F059F7',
+        'Base': '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
         'Avalanche': '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
         'Ethereum': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
         'Mantle': '0x09bc4e0d864854c6afb6eb9a9cdf58ac190d0df9',
         'Scroll': '0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4'
     },
     'USDC.E': {
-        'Sonic': '0x29219dd400f2Bf60E5a23d13Be72B486D4038894'
+        'Arbitrum': '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8'  # Bridged USDC
     },
     'DAI': {
         'Polygon': '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
@@ -344,6 +340,13 @@ RHO_ADDRESSES = {
     }
 }
 
+# Корректировка адресов Fluid - используем адреса fToken (ERC4626)
+FLUID_ADDRESSES = {
+    'Arbitrum': {
+        'USDC': '0x4CFA50B7Ce747e2D61724fcAc57f24B748FF2b2A',  # fUSDC token
+        'USDT': '0xC9FA90D24B7103Ad2215DE52afec5e1E4C7a6e62'   # fUSDT token
+    }
+}
 
 SUPPORTED_PROTOCOLS = {
     'aave-v3': AAVE_V3_ADDRESSES,
@@ -354,7 +357,8 @@ SUPPORTED_PROTOCOLS = {
     'uniswap-v3': UNISWAP_V3_ROUTER,
     'silo-v2': SILOS_ADDRESSES,
     'compound-v3': COMPOUND_ADDRESSES,
-    'rho': RHO_ADDRESSES,
+    'rho-markets': RHO_ADDRESSES,
+    'fluid': FLUID_ADDRESSES,  # Add Fluid protocol
 }
 
 YIELDEX_ORACLE_ABI = 'YieldexOracle.sol'
