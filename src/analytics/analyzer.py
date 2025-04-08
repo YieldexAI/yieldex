@@ -1,7 +1,67 @@
 import logging
-from typing import Optional, Dict, List, Tuple, Union, Any
-from common.config import SUPABASE_URL, SUPABASE_KEY
-from supabase import create_client
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+try:
+    from common.config import SUPABASE_KEY, SUPABASE_URL
+except ImportError:
+    # Fallback для тестирования
+    import os
+    SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://jwaaxywyedcclbriefwj.supabase.co')
+    SUPABASE_KEY = os.environ.get('SUPABASE_KEY', 'your-key-here')
+try:    
+    from supabase import create_client
+except ImportError:
+    print("Supabase client not found - using mock implementation for testing")
+    def create_client(*args, **kwargs):
+        class MockResponse:
+            def __init__(self, table_name=None):
+                self._table = table_name
+                
+            @property
+            def data(self):
+                if self._table == 'pool_balances':
+                    # Пустой список для демонстрации
+                    return []
+                elif self._table == 'apy_history':
+                    # Тестовые данные APY
+                    return [
+                        {'pool_id': 'USDC_Arbitrum_aave-v3', 'asset': 'USDC', 'chain': 'Arbitrum', 'apy': 5.43, 'tvl': 2500000},
+                        {'pool_id': 'USDT_Arbitrum_aave-v3', 'asset': 'USDT', 'chain': 'Arbitrum', 'apy': 4.89, 'tvl': 1800000},
+                        {'pool_id': 'ETH_Arbitrum_aave-v3', 'asset': 'ETH', 'chain': 'Arbitrum', 'apy': 3.21, 'tvl': 5000000},
+                        {'pool_id': 'USDC_Arbitrum_compound-v3', 'asset': 'USDC', 'chain': 'Arbitrum', 'apy': 5.12, 'tvl': 2200000},
+                        {'pool_id': 'USDC_Arbitrum_rho-markets', 'asset': 'USDC', 'chain': 'Arbitrum', 'apy': 6.01, 'tvl': 1200000},
+                    ]
+        
+        class MockClient:
+            def __init__(self):
+                self._current_table = None
+                
+            def table(self, table_name):
+                self._current_table = table_name
+                return self
+                
+            def select(self, *args):
+                return self
+                
+            def order(self, *args, **kwargs):
+                return self
+                
+            def eq(self, *args):
+                return self
+                
+            def limit(self, _):
+                return self
+                
+            def or_(self, _):
+                return self
+                
+            def execute(self):
+                return MockResponse(self._current_table)
+                
+            def rpc(self, *args, **kwargs):
+                return self
+        
+        return MockClient()
 import re
 
 # Configure logging
@@ -275,13 +335,132 @@ def extract_market_id_from_pool_id(pool_id):
     
     return None
 
+def get_top_pools_for_entry(chain: Optional[str] = None, limit: int = 3, min_tvl: float = 1_000_000) -> List[Dict]:
+    """
+    Get top pools for entry when user has no existing positions
+    
+    Args:
+        chain: Optional filter to only include pools from a specific chain
+        limit: Number of top pools to return
+        min_tvl: Minimum TVL to consider (default: 1,000,000)
+        
+    Returns:
+        List of dictionaries with top pool recommendations
+    """
+    logger.info(f"Getting top pools for entry in {chain or 'all chains'}")
+    
+    # Get latest APY data
+    apy_map = get_latest_apy_data(chain)
+    
+    if not apy_map:
+        logger.warning("No APY data found")
+        return []
+    
+    # Extract unique pools from the map
+    unique_pools = {}
+    for key, data in apy_map.items():
+        # Skip market-specific entries
+        if 'market_' in key:
+            continue
+            
+        pool_id = data.get('pool_id')
+        if not pool_id:
+            continue
+            
+        # If we haven't seen this pool or this is a better entry for the same pool
+        if pool_id not in unique_pools or data['apy'] > unique_pools[pool_id]['apy']:
+            unique_pools[pool_id] = data
+    
+    # Convert to list
+    pools = list(unique_pools.values())
+    
+    # Filter by TVL if specified
+    if min_tvl > 0:
+        pools = [p for p in pools if p.get('tvl', 0) >= min_tvl]
+    
+    # Sort by APY
+    pools = sorted(pools, key=lambda x: x.get('apy', 0), reverse=True)
+    
+    # Get top N
+    top_pools = pools[:limit]
+    
+    # Format results
+    results = []
+    for pool in top_pools:
+        asset = pool.get('asset', '')
+        chain_name = pool.get('chain', '')
+        protocol = extract_protocol_from_pool_id(pool.get('pool_id', ''))
+        protocol = normalize_protocol_name(protocol) if protocol else 'unknown'
+        
+        result = {
+            'asset': asset,
+            'chain': chain_name,
+            'protocol': protocol,
+            'apy': round(pool.get('apy', 0), 2),
+            'tvl': pool.get('tvl', 0),
+            'pool_id': pool.get('pool_id', ''),
+            'recommendation_type': 'entry',
+        }
+        results.append(result)
+    
+    return results
+
+def format_entry_recommendation(recommendation: Dict[str, Any], index: Optional[int] = None) -> str:
+    """
+    Format entry recommendation as a human-readable string
+    
+    Args:
+        recommendation: Dictionary with entry pool details
+        index: Optional index number for the recommendation
+        
+    Returns:
+        Formatted string representation of the entry recommendation
+    """
+    lines = []
+    
+    # Add index if provided
+    prefix = f"\n{index}. " if index is not None else "\n"
+    
+    asset = recommendation.get('asset', 'Unknown')
+    chain = recommendation.get('chain', 'Unknown')
+    protocol = recommendation.get('protocol', 'Unknown').capitalize()
+    apy = recommendation.get('apy', 0)
+    tvl = recommendation.get('tvl', 0)
+    pool_id = recommendation.get('pool_id', '')
+    
+    lines.append(f"{prefix}Deposit into {asset} on {chain} using {protocol}")
+    lines.append(f"   Current APY: {apy}%")
+    lines.append(f"   Total Value Locked: ${tvl:,.0f}")
+    lines.append(f"   Pool ID: {pool_id}")
+    
+    return "\n".join(lines)
+
+def format_entry_recommendations(recommendations: List[Dict[str, Any]]) -> str:
+    """
+    Format a list of entry recommendations as a human-readable string
+    
+    Args:
+        recommendations: List of entry pool dictionaries
+        
+    Returns:
+        Formatted string representation of all entry recommendations
+    """
+    if not recommendations:
+        return "No entry recommendations found."
+    
+    lines = [f"\nFound {len(recommendations)} top pools for entry:"]
+    for i, rec in enumerate(recommendations, 1):
+        lines.append(format_entry_recommendation(rec, i))
+    return "\n".join(lines)
+
 def get_recommendations(
     min_profit: float = 0.3,
     chain: Optional[str] = None,
     show_all_comparisons: bool = False,
     same_asset_only: bool = False,
     debug: bool = False,
-    zero_threshold: bool = False
+    zero_threshold: bool = False,
+    suggest_entry: bool = False
 ) -> Union[List[Dict], Tuple[List[Dict], List[Dict]]]:
     """
     Analyze APY differences between different assets/chains/markets and generate recommendations
@@ -293,6 +472,7 @@ def get_recommendations(
         same_asset_only: If True, only include recommendations that keep the same asset (default: False)
         debug: Enable debug output (default: False)
         zero_threshold: Set profit threshold to 0 to see all potential swaps (default: False)
+        suggest_entry: If True, provide entry recommendations when no positions found (default: False)
         
     Returns:
         If show_all_comparisons is False:
@@ -324,6 +504,9 @@ def get_recommendations(
     
     if not current_positions:
         logger.warning("No current positions found")
+        if suggest_entry:
+            logger.info("Suggesting entry pools instead")
+            return get_top_pools_for_entry(chain)
         return []
     
     recommendations = []
@@ -830,6 +1013,7 @@ if __name__ == "__main__":
     parser.add_argument('--show-all-comparisons', action='store_true', help='Show all comparisons including unprofitable ones')
     parser.add_argument('--zero-threshold', action='store_true', help='Set profit threshold to 0 to see all potential swaps')
     parser.add_argument('--same-asset-only', action='store_true', help='Only show recommendations that keep the same asset (no USDT→USDC swaps)')
+    parser.add_argument('--suggest-entry', action='store_true', help='Suggest top entry pools when no positions are found')
     
     args = parser.parse_args()
     
@@ -849,6 +1033,8 @@ if __name__ == "__main__":
         logger.info(f"  - Chain: {args.chain}")
     if args.same_asset_only:
         logger.info(f"  - Same asset only: Yes (no asset swaps)")
+    if args.suggest_entry:
+        logger.info(f"  - Suggest entry: Yes (will suggest top pools if no positions found)")
     
     # Get recommendations
     if args.show_all_comparisons:
@@ -856,16 +1042,22 @@ if __name__ == "__main__":
             min_profit=args.min_profit, 
             chain=args.chain,
             show_all_comparisons=True,
-            same_asset_only=args.same_asset_only
+            same_asset_only=args.same_asset_only,
+            suggest_entry=args.suggest_entry
         )
     else:
         recommendations = get_recommendations(
             min_profit=args.min_profit, 
             chain=args.chain,
-            same_asset_only=args.same_asset_only
+            same_asset_only=args.same_asset_only,
+            suggest_entry=args.suggest_entry
         )
     
-    print(format_recommendations(recommendations))
+    # Check if we got entry recommendations
+    if recommendations and isinstance(recommendations, list) and recommendations and 'recommendation_type' in recommendations[0] and recommendations[0]['recommendation_type'] == 'entry':
+        print(format_entry_recommendations(recommendations))
+    else:
+        print(format_recommendations(recommendations))
     
     if args.show_all_comparisons:
         print("\n\n======= ALL COMPARISONS (FOR DEBUGGING) =======")
