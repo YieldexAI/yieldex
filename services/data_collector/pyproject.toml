@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "yieldex-data-collector"
+version = "0.1.0"
+description = "DeFi data collection service for YieldX platform"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "yieldex-common",
+    "supabase>=2.0.0",
+    "fastapi>=0.104.0",
+    "pydantic>=2.4.2",
+    "uvicorn>=0.23.2",
+    "httpx>=0.25.0",
+    "web3>=6.11.1",
+    "schedule>=1.2.0",
+    "requests>=2.32.3"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "pytest-asyncio>=0.21.1",
+    "pytest-mock>=3.12.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/yieldex_data_collector"]
+
+[project.scripts]
+data-collector = "yieldex_data_collector.collector:main"
+
+[tool.hatch.metadata]
+allow-direct-references = true

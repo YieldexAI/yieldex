@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "yieldex-analyzer"
+version = "0.1.0"
+description = "Yieldex Analytics and Recommendations Module"
+authors = [
+    {name = "Yieldex Team", email = "info@Yieldex.com"},
+]
+requires-python = ">=3.11"
+dependencies = [
+    "yieldex-common",
+    "web3>=7.0.0",
+    "eth-account>=0.13.0",
+    "eth-typing>=5.1.0",
+    "eth-utils>=5.2.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.3.1",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.3.0",
+    "isort>=5.12.0",
+    "mypy>=1.3.0",
+    "ruff>=0.0.270",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/analyzer"]
+
+[tool.uv.sources]
+yieldex-analyzer = { workspace = true }
+
+[tool.hatch.metadata]
+allow-direct-references = true

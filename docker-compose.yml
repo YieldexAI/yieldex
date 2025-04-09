@@ -1,41 +1,12 @@
+version: "3.9"
+
 services:
-  # Service for collecting protocol yield data
   data-collector:
-    image: ${DOCKER_REGISTRY}/yieldex-data-collector:latest
     build:
       context: .
-      dockerfile: Dockerfile-data-collector
-    container_name: data-collector
-    environment:
-      # Required variables
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-      # Optional variables with default values
-      - WHITE_LIST_TOKENS=${WHITE_LIST_TOKENS:-USDT,USDC,DAI,GHO,AUSD,TUSD,USD₮0,FRAX,LUSD}
+      dockerfile: services/data_collector/Dockerfile
+    env_file:
+      - ./services/data_collector/.env
     volumes:
-      # Mount directories for data persistence
-      - collector_logs:/app/logs
-      - collector_config:/app/config
-      - ./src/common/abi:/app/abi    # Mount ABI files
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  data-collector-test:
-    build:
-      context: .
-      dockerfile: Dockerfile-test
-      args:
-        - DOCKER_REGISTRY=${DOCKER_REGISTRY}
-    environment:
-      - SUPABASE_URL=test
-      - SUPABASE_KEY=test
-    volumes:
-      - ./src:/app/src  # For rapid development
-
-volumes:
-  collector_logs:
-  collector_config:
+      - ./logs:/app/logs
+    command: python -m yieldex_data_collector.collector

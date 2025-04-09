@@ -16,4 +16,4 @@ Launch a basic version with minimal dependencies to validate the concept.
 
 - [X] APY comparison algorithm between networks
 - [X] Profitability calculation considering gas fees (static values)
-- [ ] Generation of JSON recommendations in the format:
+- [X] Generation of JSON recommendations in the format:

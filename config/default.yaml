@@ -1,0 +1,26 @@
+# Основные настройки
+chain: "Arbitrum"
+min_profit_threshold: 0.5  # Минимальный порог прибыльности в %
+check_interval_hours: 24   # Периодичность проверок в часах
+max_recommendations_per_cycle: 1  # Максимальное количество рекомендаций для исполнения за один цикл
+
+# Безопасность
+max_gas_gwei: 25.0  # Максимальная цена газа в Gwei
+max_slippage_percent: 0.5  # Допустимое проскальзывание для свопов в %
+
+# Функциональность
+suggest_entry: true  # Предлагать вход в новые пулы, если нет существующих позиций
+
+# Логирование
+log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_dir: "logs"  # Директория для хранения логов
+console_logs: true  # Вывод логов в консоль
+log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+log_max_bytes: 10485760  # 10 MB
+log_backup_count: 5  # Количество файлов для ротации
+
+# Протоколы для анализа
+allowed_protocols:
+  - "aave-v3"
+  - "compound-v3"
+  - "rho-markets" 

@@ -1,0 +1,50 @@
+{
+  "USDT_Ethereum_aave-v3": {
+    "website": "https://app.aave.com/reserve-overview/?underlyingAsset=0xdac17f958d2ee523a2206206994597c13d831ec7&marketName=proto_mainnet_v3",
+    "twitter": "https://twitter.com/aave",
+    "protocol": "aave-v3",
+    "chain": "Ethereum",
+    "symbol": "USDT",
+    "pool_id": "f981a304-bb6c-45b8-b0c5-fd2f515ad23a"
+  },
+  "USDC_Ethereum_compound-v3": {
+    "website": "https://app.compound.finance/markets/supply/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    "twitter": "https://twitter.com/compoundfinance",
+    "protocol": "compound-v3",
+    "chain": "Ethereum",
+    "symbol": "USDC",
+    "pool_id": "2c6c8e8d-223a-4316-b4fc-6b9834c3563e"
+  },
+  "DAI_Polygon_aave-v3": {
+    "website": "https://app.aave.com/reserve-overview/?underlyingAsset=0x8f3cf7ad23cd3cadbd9735aff958023239c6a063&marketName=proto_polygon_v3",
+    "twitter": "https://twitter.com/aave",
+    "protocol": "aave-v3",
+    "chain": "Polygon",
+    "symbol": "DAI",
+    "pool_id": "0bd5fcf2-45d3-4435-8614-55716b660907"
+  },
+  "USDC_Arbitrum_radiant-v2": {
+    "website": "https://app.radiant.capital/markets?asset=USDC",
+    "twitter": "https://twitter.com/radiantcapital",
+    "protocol": "radiant-v2",
+    "chain": "Arbitrum",
+    "symbol": "USDC",
+    "pool_id": "85a1c838-3d74-4a7d-8c7e-2f5140a4c6e8"
+  },
+  "WEETH_Ethereum_ether.fi-stake": {
+    "website": "https://app.ether.fi/stake",
+    "twitter": "https://twitter.com/ether_fi",
+    "protocol": "ether.fi-stake",
+    "chain": "Ethereum",
+    "symbol": "WEETH",
+    "pool_id": "46bd2bdf-6d92-4066-b482-e885ee172264"
+  },
+  "USDC_BSC_venus-core-pool": {
+    "website": "https://app.venus.io/market/0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+    "twitter": "https://twitter.com/VenusProtocol",
+    "protocol": "venus-core-pool",
+    "chain": "BSC",
+    "symbol": "USDC",
+    "pool_id": "dc1b9096-8040-4bc2-ac29-e2b4c143ad34"
+  }
+}

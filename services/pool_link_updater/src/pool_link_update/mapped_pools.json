@@ -1,0 +1,2382 @@
+[
+  {
+    "defillama_id": "aa70268e-4b52-42bf-a116-608b370f9501",
+    "our_pool_id": "USDC_Ethereum_aave-v3"
+  },
+  {
+    "defillama_id": "c8a24fee-ec00-4f38-86c0-9f6daebc4225",
+    "our_pool_id": "DAI_Ethereum_makerdao_DSR"
+  },
+  {
+    "defillama_id": "f981a304-bb6c-45b8-b0c5-fd2f515ad23a",
+    "our_pool_id": "USDT_Ethereum_aave-v3"
+  },
+  {
+    "defillama_id": "4e8cc592-c8d5-4824-8155-128ba521e903",
+    "our_pool_id": "USDT_Ethereum_fluid-lending"
+  },
+  {
+    "defillama_id": "4438dabc-7f0c-430b-8136-2722711ae663",
+    "our_pool_id": "USDC_Ethereum_fluid-lending"
+  },
+  {
+    "defillama_id": "ff2a68af-030c-4697-b0a1-b62a738eaef0",
+    "our_pool_id": "GHO_Ethereum_aave-v3"
+  },
+  {
+    "defillama_id": "7da72d09-56ca-4ec5-a45f-59114353e487",
+    "our_pool_id": "USDC_Ethereum_compound-v3"
+  },
+  {
+    "defillama_id": "9f3a6015-5045-4471-ba65-ad3dc7c38269",
+    "our_pool_id": "USDT_BSC_venus-core-pool"
+  },
+  {
+    "defillama_id": "e26ce7d9-db75-4aa4-b1db-cc21ae17bdfb",
+    "our_pool_id": "DAI_Ethereum_spark"
+  },
+  {
+    "defillama_id": "9bf5faf4-32e3-437e-8080-c38eae10cfa6",
+    "our_pool_id": "USDC.E_Sonic_aave-v3"
+  },
+  {
+    "defillama_id": "d9fa8e14-0447-4207-9ae8-7810199dfa1f",
+    "our_pool_id": "USDC_Arbitrum_aave-v3"
+  },
+  {
+    "defillama_id": "f4d5b566-e815-4ca2-bb07-7bcd8bc797f1",
+    "our_pool_id": "USDT_Ethereum_compound-v3"
+  },
+  {
+    "defillama_id": "89eba1e5-1b1b-47b6-958b-38138a04c244",
+    "our_pool_id": "USDC_BSC_venus-core-pool"
+  },
+  {
+    "defillama_id": "c4b05318-88af-4536-a834-f5fc8940d2d3",
+    "our_pool_id": "USDC_Avalanche_aave-v3"
+  },
+  {
+    "defillama_id": "7e0661bf-8cf3-45e6-9424-31916d4c7b84",
+    "our_pool_id": "USDC_Base_aave-v3"
+  },
+  {
+    "defillama_id": "0c3c1b07-7c36-4fbb-8e71-226e02bf15c1",
+    "our_pool_id": "USDC_Cronos_tectonic"
+  },
+  {
+    "defillama_id": "d2141a59-c199-4be7-8d4b-c8223954836b",
+    "our_pool_id": "USDC_Solana_kamino-lend"
+  },
+  {
+    "defillama_id": "b37c26c3-848f-45f0-bd75-af97f1674a4d",
+    "our_pool_id": "USDT_Cronos_tectonic"
+  },
+  {
+    "defillama_id": "c89af47f-032a-4c59-bdc9-17a7f1514a3b",
+    "our_pool_id": "USDC_Ethereum_goldfinch"
+  },
+  {
+    "defillama_id": "3665ee7e-6c5d-49d9-abb7-c47ab5d9d4ac",
+    "our_pool_id": "DAI_Ethereum_aave-v3"
+  },
+  {
+    "defillama_id": "3a6cc030-738d-4e19-8a40-e63e9c4d5a6f",
+    "our_pool_id": "USD\u20ae0_Arbitrum_aave-v3"
+  },
+  {
+    "defillama_id": "ce77c1eb-f51d-4652-8c25-b53f8254827a",
+    "our_pool_id": "USDC.E_Sonic_silo-v2_20"
+  },
+  {
+    "defillama_id": "57647093-2868-4e65-97ab-9cae8ec74e7d",
+    "our_pool_id": "USDT_Ethereum_compound-v2"
+  },
+  {
+    "defillama_id": "dac406f6-5600-437e-849d-f03daa383864",
+    "our_pool_id": "USDT_Tron_justlend"
+  },
+  {
+    "defillama_id": "e6692d08-85b6-4b50-952b-7c5c531862fe",
+    "our_pool_id": "USDT_Avalanche_aave-v3"
+  },
+  {
+    "defillama_id": "0fddbf5d-ec14-4570-80d3-a70c85573d3e",
+    "our_pool_id": "USDC_Sui_navi-lending"
+  },
+  {
+    "defillama_id": "4c45cc9e-e1a4-43c9-8a3d-687d96abb07c",
+    "our_pool_id": "USDC_Arbitrum_fluid-lending"
+  },
+  {
+    "defillama_id": "85247b13-8180-44e7-b38c-4d324cc68a92",
+    "our_pool_id": "USDT_Arbitrum_compound-v3"
+  },
+  {
+    "defillama_id": "dde4c16c-504d-470b-9404-006287ce0906",
+    "our_pool_id": "USDC_Solana_save_Main Pool"
+  },
+  {
+    "defillama_id": "9f9b14d8-4eaa-4718-85e9-43ca843f6dc6",
+    "our_pool_id": "USD\u20ae0_Arbitrum_fluid-lending"
+  },
+  {
+    "defillama_id": "7e7821a2-3d20-4ae7-9c3d-04cd57904555",
+    "our_pool_id": "USDT_Polygon_aave-v3"
+  },
+  {
+    "defillama_id": "1b8b4cdb-0728-42a8-bf13-2c8fea7427ee",
+    "our_pool_id": "USDC_Polygon_aave-v3"
+  },
+  {
+    "defillama_id": "7372edda-f07f-4598-83e5-4edec48c4039",
+    "our_pool_id": "USDC_Base_fluid-lending"
+  },
+  {
+    "defillama_id": "a349fea4-d780-4e16-973e-70ca9b606db2",
+    "our_pool_id": "USDC_Ethereum_aave-v2"
+  },
+  {
+    "defillama_id": "7be3388a-0591-4281-a6f3-eff3217693fa",
+    "our_pool_id": "DAI_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "94623cbe-f6ac-47da-b157-776073f2ac13",
+    "our_pool_id": "USDT_Ton_storm-trade"
+  },
+  {
+    "defillama_id": "14bd0ebc-1c70-4b61-80a9-91390179286a",
+    "our_pool_id": "USDC_Solana_credix"
+  },
+  {
+    "defillama_id": "b64ea0b3-befa-4333-be3d-91f0d19e3e6d",
+    "our_pool_id": "USDC_Polygon_fluid-lending"
+  },
+  {
+    "defillama_id": "cefa9bb8-c230-459a-a855-3b94e96acd8c",
+    "our_pool_id": "USDC_Ethereum_compound-v2"
+  },
+  {
+    "defillama_id": "0758c3b8-4ffb-4176-b0a9-f446e367db46",
+    "our_pool_id": "USDC_Optimism_aave-v3"
+  },
+  {
+    "defillama_id": "ff59b165-64e0-4868-a6db-6049b5135358",
+    "our_pool_id": "USDC_Avalanche_benqi-lending"
+  },
+  {
+    "defillama_id": "90a96279-5f4e-49a3-9e27-b384dd49a2b3",
+    "our_pool_id": "USDC_Sui_kai-finance"
+  },
+  {
+    "defillama_id": "4a61f9bc-3e9a-4849-8b2c-67574dd22a86",
+    "our_pool_id": "USDT_Polygon_fluid-lending"
+  },
+  {
+    "defillama_id": "69cf831d-624a-4f23-b5e3-c0f63ad1fa01",
+    "our_pool_id": "USDC_Base_moonwell"
+  },
+  {
+    "defillama_id": "c48595c8-49bc-4853-80e4-f18c470bbfc3",
+    "our_pool_id": "USDC_Arbitrum_gains-network"
+  },
+  {
+    "defillama_id": "41229bea-7827-4a68-addb-b0cf1be45eee",
+    "our_pool_id": "USDCE_Sonic_beefy_Silo"
+  },
+  {
+    "defillama_id": "1f2252e3-64c0-47ad-8249-84a8711862fb",
+    "our_pool_id": "USDC.E_Sonic_silo-v2_8"
+  },
+  {
+    "defillama_id": "29be6a85-414f-4a66-b075-98863278912a",
+    "our_pool_id": "USDT_BSC_aave-v3"
+  },
+  {
+    "defillama_id": "2b7f6b6d-39fd-4bbe-ab37-d0e56615dde0",
+    "our_pool_id": "USDC_Ethereum_across"
+  },
+  {
+    "defillama_id": "72124487-ba91-46d8-907e-31b8eca90af3",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "d9c395b9-00d0-4426-a6b3-572a6dd68e54",
+    "our_pool_id": "USDC_Arbitrum_compound-v3"
+  },
+  {
+    "defillama_id": "b80953e3-0fdc-4300-b97a-7840c16a1ca3",
+    "our_pool_id": "USDC_Base_synthetix-v3"
+  },
+  {
+    "defillama_id": "1382b89f-180f-40f6-9347-62e5ddc905b2",
+    "our_pool_id": "USDC_Base_extra-finance-leverage-farming"
+  },
+  {
+    "defillama_id": "3fdf7baa-8ca7-4ad5-bf0c-f934878c0c96",
+    "our_pool_id": "DAI_Solana_save_LST Pool"
+  },
+  {
+    "defillama_id": "7d89af7a-24c9-4292-aa38-7c71b05fbd6d",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "60d657c9-5f63-4771-a85b-2cf8d507ec00",
+    "our_pool_id": "USDT_Ethereum_aave-v2"
+  },
+  {
+    "defillama_id": "1b532a84-38ab-4e80-8bd2-94f062810ac4",
+    "our_pool_id": "USDC_Ethereum_gearbox"
+  },
+  {
+    "defillama_id": "ae3397ed-1f0f-4aa4-ab62-44413ea8cd9e",
+    "our_pool_id": "USDC_Base_avantis_junior"
+  },
+  {
+    "defillama_id": "65ce8276-b4d9-41ba-9f6f-21fc374cf9bc",
+    "our_pool_id": "USDC_Ethereum_spark"
+  },
+  {
+    "defillama_id": "cc110152-36c2-4e10-9c12-c5b4eb662143",
+    "our_pool_id": "DAI_Ethereum_compound-v2"
+  },
+  {
+    "defillama_id": "7ec9f4ba-803c-4935-97e2-342aa75b4ff4",
+    "our_pool_id": "USDT_Solana_save_Main Pool"
+  },
+  {
+    "defillama_id": "70f0fc28-6860-43b8-b032-c11bc2bc5414",
+    "our_pool_id": "USDT_Tron_allbridge-classic"
+  },
+  {
+    "defillama_id": "0c8567f8-ba5b-41ad-80de-00a71895eb19",
+    "our_pool_id": "USDC_Base_compound-v3"
+  },
+  {
+    "defillama_id": "5a97dc57-ea99-4d8b-aac9-b1b8b80c6b60",
+    "our_pool_id": "USDC_Aptos_echelon-market"
+  },
+  {
+    "defillama_id": "cb222642-8a6f-4a91-850c-dd718f294146",
+    "our_pool_id": "DAI_Ethereum_across"
+  },
+  {
+    "defillama_id": "a5f59d50-68c5-4ae4-b678-df8338886ccb",
+    "our_pool_id": "USDC_Solana_allbridge-classic"
+  },
+  {
+    "defillama_id": "405d8dad-5c99-4c91-90d3-82813ade1ff1",
+    "our_pool_id": "DAI_Ethereum_aave-v2"
+  },
+  {
+    "defillama_id": "0fbb8455-2846-4bc3-8901-50a4bbb9e93c",
+    "our_pool_id": "USDC_Ethereum_thorchain"
+  },
+  {
+    "defillama_id": "bde08c85-41c5-4d80-9bb1-0835a4352efa",
+    "our_pool_id": "USDT_Optimism_aave-v3"
+  },
+  {
+    "defillama_id": "546b3c0c-138d-4190-b46b-efa1765f1dd3",
+    "our_pool_id": "USDT_Solana_kamino-lend"
+  },
+  {
+    "defillama_id": "daf810d4-b190-4d9a-a5c6-f784d6272a77",
+    "our_pool_id": "USDT_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "926767b8-86be-4f19-938b-f91f1b74ca89",
+    "our_pool_id": "USDT_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "688234ed-0cf9-463e-90de-79f8339e8734",
+    "our_pool_id": "AUSD_Avalanche_benqi-lending"
+  },
+  {
+    "defillama_id": "6a655d2e-90b3-4b4a-b27a-506c45cb7321",
+    "our_pool_id": "USDC_Base_beefy_Morpho"
+  },
+  {
+    "defillama_id": "414c2509-6ee2-45ad-8f85-b150986c741a",
+    "our_pool_id": "USDT_Op_bnb_kiloex"
+  },
+  {
+    "defillama_id": "15cf7c05-b5f0-4bde-8745-a791528c4381",
+    "our_pool_id": "USDC_BSC_aave-v3"
+  },
+  {
+    "defillama_id": "d5e3d09c-f681-46cb-932c-8d6fe1ff1487",
+    "our_pool_id": "USDT_Avalanche_benqi-lending"
+  },
+  {
+    "defillama_id": "56d72510-4604-45e7-a034-18786408ed91",
+    "our_pool_id": "USDT_Polygon_azuro_7 day lockup"
+  },
+  {
+    "defillama_id": "d1552e71-ba15-41e0-8b9a-1be53571e8e0",
+    "our_pool_id": "USDC_Base_beefy_Compound"
+  },
+  {
+    "defillama_id": "578cffd4-1470-44d0-8c5d-e9d4bd403651",
+    "our_pool_id": "GHO_Ethereum_fluid-lending"
+  },
+  {
+    "defillama_id": "8a1218c0-b408-4784-852c-8305396ba8f4",
+    "our_pool_id": "AUSD_Avalanche_aave-v3"
+  },
+  {
+    "defillama_id": "71e0a005-653b-41c9-b642-60ca06f83ff8",
+    "our_pool_id": "USDC_Base_kiloex"
+  },
+  {
+    "defillama_id": "03ded5d7-ded8-49b6-bd3c-2f48c30923be",
+    "our_pool_id": "USDT_BSC_alpaca-leveraged-yield-farming"
+  },
+  {
+    "defillama_id": "1d0952d2-f592-44c5-bed8-020e8386587f",
+    "our_pool_id": "USDT_BSC_allbridge-classic"
+  },
+  {
+    "defillama_id": "a19246dc-ce7a-43a7-9d98-76f71d2a67e5",
+    "our_pool_id": "USDT_Ethereum_allbridge-classic"
+  },
+  {
+    "defillama_id": "ddf68725-6ced-4c27-90ca-c14752cd7218",
+    "our_pool_id": "USDC_Sui_scallop-lend"
+  },
+  {
+    "defillama_id": "461505e0-e631-4af0-b0e9-6a861d917939",
+    "our_pool_id": "USDC.E_Gnosis_aave-v3"
+  },
+  {
+    "defillama_id": "d7cf74be-6f52-4491-9260-4e371c5a31e0",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "fe830e11-8971-47b3-8756-d66f09a617ee",
+    "our_pool_id": "USDC_Base_avantis_senior"
+  },
+  {
+    "defillama_id": "5e498f38-9d6f-49b7-a197-9068103f9866",
+    "our_pool_id": "USDC_zkSync Era_aave-v3"
+  },
+  {
+    "defillama_id": "020a7d31-334d-49e5-bf43-631573b9982c",
+    "our_pool_id": "USDT_Sui_navi-lending"
+  },
+  {
+    "defillama_id": "d38931c5-65b5-4f16-b11b-f54e6af5dfe3",
+    "our_pool_id": "USDT_Ethereum_thorchain"
+  },
+  {
+    "defillama_id": "d35163a5-40cc-4206-8487-0085055d44be",
+    "our_pool_id": "USDT_Solana_allbridge-classic"
+  },
+  {
+    "defillama_id": "a17d8b32-48cb-4446-aad7-ed4278f144e0",
+    "our_pool_id": "USDC_Polygon_compound-v3"
+  },
+  {
+    "defillama_id": "85934f95-196b-48d8-bba5-1761b4627505",
+    "our_pool_id": "USDC_Base_arcadia-v2_Arcadia V2 USDC Pool"
+  },
+  {
+    "defillama_id": "113e85e5-4486-40b8-ba64-2885342ef655",
+    "our_pool_id": "USDC_Ethereum_fractal-protocol"
+  },
+  {
+    "defillama_id": "6f87c41f-4b9b-4e68-aba5-3473d0cfe4a7",
+    "our_pool_id": "USDC_Osmosis_mars-lend"
+  },
+  {
+    "defillama_id": "e5a2f2e1-f151-4047-9a30-62af991cff5c",
+    "our_pool_id": "USDC_Ethereum_ipor-fusion_IPOR USDC Lending Optimizer Ethereum"
+  },
+  {
+    "defillama_id": "9fe9c7ec-e0a3-466f-8215-16720b735d07",
+    "our_pool_id": "USDT_Mantle_woofi-earn_SuperchargerV2"
+  },
+  {
+    "defillama_id": "1550613c-d60c-4d78-b370-0a7ec8a24dc7",
+    "our_pool_id": "USDC_Arbitrum_harmonix-finance"
+  },
+  {
+    "defillama_id": "a8e3d841-2788-4647-ad54-5a36fac451b1",
+    "our_pool_id": "DAI_Arbitrum_aave-v3"
+  },
+  {
+    "defillama_id": "05a3d186-2d42-4e21-b1f0-68c079d22677",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "b828f0cb-853d-4b32-aebb-2e20d7fd70a8",
+    "our_pool_id": "USDC_Optimism_compound-v3"
+  },
+  {
+    "defillama_id": "fd218e64-f5d4-495f-a943-7a120a33e281",
+    "our_pool_id": "USDC_Algorand_folks-finance-lending"
+  },
+  {
+    "defillama_id": "b9196391-d6fa-4530-bd87-bc64bb6fef64",
+    "our_pool_id": "USDC_Polynomial_polynomial-liquidity"
+  },
+  {
+    "defillama_id": "94473b8f-8052-4490-aa8d-7df1024f2927",
+    "our_pool_id": "USDT_Polygon_compound-v3"
+  },
+  {
+    "defillama_id": "1daad8ac-d79a-491d-b972-e57bf98991b5",
+    "our_pool_id": "USDT_Ethereum_across"
+  },
+  {
+    "defillama_id": "0611324f-a30c-4795-a16a-fa4c5bb758fa",
+    "our_pool_id": "USDC_Sei_takara-lend_Takara Lend USDC Market"
+  },
+  {
+    "defillama_id": "74026807-e439-4a7f-bacb-eb1b45a2e20b",
+    "our_pool_id": "SCUSD_Sonic_silo-v2_15"
+  },
+  {
+    "defillama_id": "ec762755-29a1-41d8-957f-0b00dcf00dd6",
+    "our_pool_id": "USDC_Scroll_aave-v3"
+  },
+  {
+    "defillama_id": "73afa0b0-a513-4fdd-a9af-09c6ceac109b",
+    "our_pool_id": "USDT_Ton_evaa-protocol_Main"
+  },
+  {
+    "defillama_id": "d9dc9882-7036-4098-a3c3-a8c3a307fa4d",
+    "our_pool_id": "USDT_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "e6ddd0b2-00f3-48eb-b1e2-aabaada6bb6f",
+    "our_pool_id": "USDC_Solana_save_JLP Pool"
+  },
+  {
+    "defillama_id": "d0e11625-79b9-40e3-b01f-a473af961995",
+    "our_pool_id": "USDC_Arbitrum_dolomite_Dolomite Balance"
+  },
+  {
+    "defillama_id": "5d84ca8b-8c55-4a8a-816e-5f3fe0357bc5",
+    "our_pool_id": "USDT_Polygon_aave-v2"
+  },
+  {
+    "defillama_id": "3b56710e-2e33-4aaf-8930-ab3d93cc95d6",
+    "our_pool_id": "USDC_Avalanche_deltaprime"
+  },
+  {
+    "defillama_id": "2c58c3ce-d731-449e-b934-b2c446119085",
+    "our_pool_id": "USDC_Solana_francium"
+  },
+  {
+    "defillama_id": "32fad564-35de-407e-a660-159b43bd95a1",
+    "our_pool_id": "USDC.E_Avalanche_aave-v2"
+  },
+  {
+    "defillama_id": "4c6558d4-582c-4560-88d5-52fdbbb09829",
+    "our_pool_id": "USDC_Starknet_nostra-money-market"
+  },
+  {
+    "defillama_id": "f9dd23c2-7fe7-46d5-bdbd-4c66b86277b7",
+    "our_pool_id": "FRAX_Ethereum_vesper_Aggressive"
+  },
+  {
+    "defillama_id": "8d208be9-5455-48f9-89ba-1113f3f875ea",
+    "our_pool_id": "USDT_Optimism_compound-v3"
+  },
+  {
+    "defillama_id": "56b52dbc-9354-4a9a-8105-88cf5e5b043d",
+    "our_pool_id": "USDT_Aptos_echelon-market"
+  },
+  {
+    "defillama_id": "d7dc445f-d664-4a1b-a364-93efc6b4fb73",
+    "our_pool_id": "USDC_BSC_wing-finance"
+  },
+  {
+    "defillama_id": "d8870f77-a386-4e31-affe-3a77320f041c",
+    "our_pool_id": "USDC_Arbitrum_beefy_Compound"
+  },
+  {
+    "defillama_id": "6a5a986c-ca2c-4288-9f42-fc651e2f2dbd",
+    "our_pool_id": "USDC_zkSync Era_holdstation-defutures"
+  },
+  {
+    "defillama_id": "15c3e528-2825-4ca4-804b-406e8b8e2ebd",
+    "our_pool_id": "DAI_Arbitrum_gains-network"
+  },
+  {
+    "defillama_id": "c95a8c7b-c73b-4f4a-8860-3b77568dc9f7",
+    "our_pool_id": "DAI_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "3fbb0e46-2efe-47cc-acbe-5c892fa56845",
+    "our_pool_id": "DAI_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "727fc50d-b687-4f74-a30e-ee961c25c5e3",
+    "our_pool_id": "USDC_Canto_canto-lending"
+  },
+  {
+    "defillama_id": "effcb4a4-4dcb-45e5-935d-f15542c13e6b",
+    "our_pool_id": "USDC_Ethereum_aave-v3_lido-market"
+  },
+  {
+    "defillama_id": "d511efb8-f61b-43ce-bb1e-dffc6a57727f",
+    "our_pool_id": "USDC_Base_gains-network"
+  },
+  {
+    "defillama_id": "eb342dc8-8d50-4300-8e92-c8d88e026c94",
+    "our_pool_id": "USDC_Ethereum_vesper_Aggressive"
+  },
+  {
+    "defillama_id": "45ecff73-d1b5-412f-ae15-c409034cc14c",
+    "our_pool_id": "USDC_Ethereum_beefy_Morpho"
+  },
+  {
+    "defillama_id": "37360ac7-b50d-4f55-ba36-4d5312231d1a",
+    "our_pool_id": "USDT_Core_colend-protocol"
+  },
+  {
+    "defillama_id": "e649ae02-570b-4cf1-b3f8-a775d6dd5a37",
+    "our_pool_id": "USDC.E_Sonic_silo-v2_23"
+  },
+  {
+    "defillama_id": "1238c321-5868-4671-b1d3-c0e3a9cdf022",
+    "our_pool_id": "USDC_Ethereum_allbridge-classic"
+  },
+  {
+    "defillama_id": "4b85a7c8-a03a-42a2-be47-3675ca8a1d5e",
+    "our_pool_id": "USDC_Optimism_beefy_Compound"
+  },
+  {
+    "defillama_id": "25d78af9-aa94-4216-bcd0-25b4055b891a",
+    "our_pool_id": "USDT_Manta_kiloex"
+  },
+  {
+    "defillama_id": "f5a77f34-35f4-4cf0-af76-60485a2d6f42",
+    "our_pool_id": "USDCE_Polygon_beefy_Compound"
+  },
+  {
+    "defillama_id": "6f8cb9ec-67d5-4a0b-b5d6-62f53d5f140c",
+    "our_pool_id": "DAI_Ethereum_gearbox"
+  },
+  {
+    "defillama_id": "49dc4cbc-6341-4c80-984a-5d992f51e146",
+    "our_pool_id": "USDC_Avalanche_folks-finance-xchain"
+  },
+  {
+    "defillama_id": "2d78eecd-603a-4b03-845b-4f721c38f039",
+    "our_pool_id": "USDC_Base_harvest-finance_Moonwell"
+  },
+  {
+    "defillama_id": "30b43fb3-c107-44b0-9697-f418235c638c",
+    "our_pool_id": "USDC_Optimism_exactly_2025-05-08"
+  },
+  {
+    "defillama_id": "2b702453-a7c1-41c4-bcfa-e6762c2af34f",
+    "our_pool_id": "USDC_Optimism_exactly_2025-08-28"
+  },
+  {
+    "defillama_id": "ef778563-4a0c-4e76-bf53-db7e9530b8b5",
+    "our_pool_id": "USDC_Optimism_exactly_2025-07-31"
+  },
+  {
+    "defillama_id": "97767ebb-3ffc-45d5-ae6d-48148cd46d42",
+    "our_pool_id": "USDC_Optimism_exactly_2025-06-05"
+  },
+  {
+    "defillama_id": "59d7da2f-1475-42c6-8e2b-641b3a64097d",
+    "our_pool_id": "USDC_Optimism_exactly_2025-07-03"
+  },
+  {
+    "defillama_id": "33618c8e-40a4-4d05-bee1-eb20675a371d",
+    "our_pool_id": "USDC_Optimism_exactly_2025-09-25"
+  },
+  {
+    "defillama_id": "114794a7-fd8f-4793-9407-63f38435e6db",
+    "our_pool_id": "USDC_Optimism_exactly_2025-04-10"
+  },
+  {
+    "defillama_id": "8504f261-4f90-4172-9594-b5ca76e3a4a4",
+    "our_pool_id": "USDC_Optimism_exactly"
+  },
+  {
+    "defillama_id": "41ef5890-d6f4-4c54-9c39-4505a7bac672",
+    "our_pool_id": "USDC_Arbitrum_deltaprime"
+  },
+  {
+    "defillama_id": "11979961-012e-4fcb-a934-eb6241f0c1d1",
+    "our_pool_id": "USDT_Avalanche_yield-yak-aggregator_benqi"
+  },
+  {
+    "defillama_id": "24762515-822a-46af-927c-77a1dc449bd0",
+    "our_pool_id": "USDC_Optimism_aave-v3"
+  },
+  {
+    "defillama_id": "7f81b151-a769-45d3-ae54-ef378633f035",
+    "our_pool_id": "DAI_BSC_venus-core-pool"
+  },
+  {
+    "defillama_id": "0000bea3-daab-4a61-b459-5bb9ab1915cb",
+    "our_pool_id": "USDC_Ethereum_stream-finance_LEVUSDC"
+  },
+  {
+    "defillama_id": "6600934f-6323-447d-8a7d-67fbede8529d",
+    "our_pool_id": "USDT_Ethereum_flux-finance"
+  },
+  {
+    "defillama_id": "b8e7ff00-df03-4dd0-87da-667083e04cb1",
+    "our_pool_id": "USDC_Base_ipor-fusion_IPOR USDC Lending Optimizer Base"
+  },
+  {
+    "defillama_id": "64272d25-288b-484c-8041-8e19478277bb",
+    "our_pool_id": "AUSD_Avalanche_stable-jack"
+  },
+  {
+    "defillama_id": "55e76286-c956-4614-ab4c-ad09250d189f",
+    "our_pool_id": "USDT_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "4650fcdf-3118-4b7e-a184-352e156c9cb8",
+    "our_pool_id": "USDC_Solana_save_TURBO SOL Pool"
+  },
+  {
+    "defillama_id": "19aed72a-fc2a-4c40-9fae-6628f4ac9e24",
+    "our_pool_id": "USDT_BSC_alpaca-finance-2.0"
+  },
+  {
+    "defillama_id": "5e786618-d0c8-4f3f-9191-1ab0a4ad16fd",
+    "our_pool_id": "USDT_BSC_kiloex"
+  },
+  {
+    "defillama_id": "ef8fbf02-ac96-4453-a78c-37bda4cd65e3",
+    "our_pool_id": "LUSD_Ethereum_aave-v3"
+  },
+  {
+    "defillama_id": "440243fe-572c-4c3f-bab3-0a60c7e7b6f2",
+    "our_pool_id": "USDC_Base_extra-finance-leverage-farming"
+  },
+  {
+    "defillama_id": "0e2300dc-ffcb-43cd-8b3e-c697b5ab423b",
+    "our_pool_id": "USDT_Starknet_nostra-money-market"
+  },
+  {
+    "defillama_id": "bd6115c6-e90b-4888-a978-c642aed23d7b",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "e23d82b2-48a5-4391-b72f-7c9e56454ef1",
+    "our_pool_id": "USDT_Optimism_beefy_Compound"
+  },
+  {
+    "defillama_id": "05badb28-e8ed-4ecf-a7c7-14835875407d",
+    "our_pool_id": "DAI_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "51134fc4-19d5-44d2-b4eb-b7215c51a48a",
+    "our_pool_id": "USDC_Stellar_blend-pools_Fixed XLM-USDC Pool"
+  },
+  {
+    "defillama_id": "ac7fc0fe-4b0f-4f80-8e0f-4f47d67d6681",
+    "our_pool_id": "DAI_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "1a4f5b07-5f47-4974-b180-964a6bf5bbe8",
+    "our_pool_id": "USDC_Ethereum_ipor-derivatives"
+  },
+  {
+    "defillama_id": "c574008e-c7d6-4b25-a887-f210a5ce1a00",
+    "our_pool_id": "USDC_Solana_save_JLP/SOL/USDC Pool"
+  },
+  {
+    "defillama_id": "f7aebae7-3738-47dc-bdd8-ac341b3ec66e",
+    "our_pool_id": "USDC_Avalanche_yield-yak-aggregator_benqi"
+  },
+  {
+    "defillama_id": "07354cfc-833b-4057-ba73-5796047cb5be",
+    "our_pool_id": "USDC_Ethereum_sandclock_Opal"
+  },
+  {
+    "defillama_id": "6e6f53b6-6669-4037-948c-f42e5b0a243e",
+    "our_pool_id": "USDC_Ethereum_harvest-finance_Fluid"
+  },
+  {
+    "defillama_id": "37b04faa-95bb-4ccb-9c4e-c70fa167342b",
+    "our_pool_id": "USDC_Polygon_aave-v3"
+  },
+  {
+    "defillama_id": "c57bdc97-3100-41ff-845f-075363f6f5a4",
+    "our_pool_id": "DAI_Polygon_aave-v3"
+  },
+  {
+    "defillama_id": "ac4c79f0-d5e9-4966-b562-4df3c3b145a0",
+    "our_pool_id": "USDC_zkSync Era_woofi-earn_SuperchargerV2"
+  },
+  {
+    "defillama_id": "325ad2d6-70b1-48d7-a557-c2c99a036f87",
+    "our_pool_id": "USDC_Ethereum_morpho-aave"
+  },
+  {
+    "defillama_id": "91e98a60-fd73-4e6c-bde8-77eb67310e97",
+    "our_pool_id": "USDC_Cardano_liqwid"
+  },
+  {
+    "defillama_id": "23c450b9-679a-4f88-83cc-5f07e2667fcc",
+    "our_pool_id": "USDT_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "ce5e5dea-3782-4ce9-8f14-0222450116ae",
+    "our_pool_id": "USDC_Arbitrum_allbridge-classic"
+  },
+  {
+    "defillama_id": "14e08de3-b21a-4035-8e38-7fe6f841524d",
+    "our_pool_id": "USDC_Optimism_extra-finance-leverage-farming"
+  },
+  {
+    "defillama_id": "e155c710-ba03-4573-8f31-fe0f1b78382d",
+    "our_pool_id": "USDT_Kava_scrub-invest"
+  },
+  {
+    "defillama_id": "edaefc40-d818-48bd-a87a-d9c87598c1bc",
+    "our_pool_id": "USDT_Ethereum_gearbox"
+  },
+  {
+    "defillama_id": "9a356899-c799-4090-aeb9-ed27fb96b924",
+    "our_pool_id": "USDC.E_Sonic_silo-v2_34"
+  },
+  {
+    "defillama_id": "c76b0c95-8937-447e-8426-349d511ef1f0",
+    "our_pool_id": "USDC_Base_ipor-derivatives"
+  },
+  {
+    "defillama_id": "4d94e177-4162-4b30-b72b-f7a77ed0573a",
+    "our_pool_id": "USDC_Optimism_vesper_Aggressive"
+  },
+  {
+    "defillama_id": "363e5586-cfee-402c-9b0b-be70366052e8",
+    "our_pool_id": "DAI_Optimism_aave-v3"
+  },
+  {
+    "defillama_id": "30f6670e-df51-4e78-a5fc-d197fde0a9aa",
+    "our_pool_id": "USDC_MultiversX_hatom-lending"
+  },
+  {
+    "defillama_id": "218505e7-996f-4a82-a845-6cf85734b00e",
+    "our_pool_id": "USDC_Arbitrum_woofi-earn_SuperchargerV2"
+  },
+  {
+    "defillama_id": "dd62e177-0a61-4e07-8899-e024924d323c",
+    "our_pool_id": "USDT_Ton_evaa-protocol_LP"
+  },
+  {
+    "defillama_id": "ed227286-abb0-4a34-ada5-39f7ebd81afb",
+    "our_pool_id": "DAI_Ethereum_flux-finance"
+  },
+  {
+    "defillama_id": "f51ac77b-5f5b-4a7e-93b8-93ee5d349277",
+    "our_pool_id": "USDC_Linea_bagful"
+  },
+  {
+    "defillama_id": "0be615d3-870c-41f5-9990-58056d22fa34",
+    "our_pool_id": "USDT_Polygon_beefy_Compound"
+  },
+  {
+    "defillama_id": "78cc9603-b71a-40d0-b111-edf5058393c9",
+    "our_pool_id": "USDT_Ethereum_ipor-fusion_IPOR USDT Lending Optimizer Ethereum"
+  },
+  {
+    "defillama_id": "0a5e4167-38b6-455e-9028-bf584e3bfe2b",
+    "our_pool_id": "USDT_Ethereum_ipor-derivatives"
+  },
+  {
+    "defillama_id": "3d17cf98-96c4-4b62-98f4-43ba371c267f",
+    "our_pool_id": "USDC_Linea_zerolend"
+  },
+  {
+    "defillama_id": "7aab7b0f-01c1-4467-bc0d-77826d870f19",
+    "our_pool_id": "USDC_Arbitrum_aave-v3"
+  },
+  {
+    "defillama_id": "60573702-968e-4b8d-8c88-cc9fc973b6a6",
+    "our_pool_id": "USDT_Ethereum_benddao-lending"
+  },
+  {
+    "defillama_id": "535daca1-b457-48be-b93f-82b7a7fa1e0a",
+    "our_pool_id": "TUSD_Tron_justlend"
+  },
+  {
+    "defillama_id": "77c3c4ea-3446-48b8-9f05-499ce1f53fc5",
+    "our_pool_id": "USDC_Base_balmy_Morpho"
+  },
+  {
+    "defillama_id": "7ceb1513-fc4f-41d5-84fc-3ce206648ff8",
+    "our_pool_id": "USDC_Neutron_mars-lend"
+  },
+  {
+    "defillama_id": "3e17f128-d959-4acd-8622-a8f6b57e868d",
+    "our_pool_id": "DAI_Polygon_aave-v2"
+  },
+  {
+    "defillama_id": "bde2bbc5-ffa5-42c7-a38a-ce31a7fca473",
+    "our_pool_id": "USDC_Arbitrum_harmonix-finance"
+  },
+  {
+    "defillama_id": "c43627fb-3b95-436a-b93f-7c874d6c5f36",
+    "our_pool_id": "DAI_Polygon_gains-network"
+  },
+  {
+    "defillama_id": "1fe6614c-f384-401d-8a63-e696e13c808c",
+    "our_pool_id": "USDC_Base_seamless-protocol"
+  },
+  {
+    "defillama_id": "120b2231-1b32-4635-b194-aa7c49e2fe20",
+    "our_pool_id": "USDC_Polygon_woofi-earn_SuperchargerV2"
+  },
+  {
+    "defillama_id": "ba870723-bcf6-48bc-865a-151d0c5cb3b3",
+    "our_pool_id": "USDC_Polygon_ensuro_Senior Pool"
+  },
+  {
+    "defillama_id": "b579aeba-e9b5-4ce5-a70a-eff586597444",
+    "our_pool_id": "USDT_Flare_kinetic"
+  },
+  {
+    "defillama_id": "3ab21e1f-d8b6-4536-ada7-600d4bce09b9",
+    "our_pool_id": "USDC_Avalanche_thorchain"
+  },
+  {
+    "defillama_id": "e2f0e83e-e07b-44bd-9718-e25b96295468",
+    "our_pool_id": "USDC_Avalanche_woofi-earn_SuperchargerV2"
+  },
+  {
+    "defillama_id": "4a55d67d-adca-4d09-895e-35cae886ca22",
+    "our_pool_id": "USDC_Optimism_stargate-v1"
+  },
+  {
+    "defillama_id": "b127a5d9-567b-4a00-b4de-4de0807b10cc",
+    "our_pool_id": "USDC_Ethereum_sturdy-v2_Ondo aggregator"
+  },
+  {
+    "defillama_id": "7eff1f92-e36d-4b6c-a405-c9957e6e6fb9",
+    "our_pool_id": "USDC_Optimism_moonwell"
+  },
+  {
+    "defillama_id": "8dcc2669-f112-4339-86d1-ebb94a05901f",
+    "our_pool_id": "USDC_Base_beefy_Morpho"
+  },
+  {
+    "defillama_id": "7e649021-fc9c-44ab-b605-3a9674d098d6",
+    "our_pool_id": "USDC.E_Arbitrum_goat-protocol"
+  },
+  {
+    "defillama_id": "1749b636-897d-49f7-b76f-2872b67c2bc0",
+    "our_pool_id": "USDC_Arbitrum_ipor-fusion_IPOR USDC Lending Optimizer Arbitrum"
+  },
+  {
+    "defillama_id": "264de522-3449-4e0d-9398-3ac7574dd337",
+    "our_pool_id": "USDC_Ethereum_symbiosis"
+  },
+  {
+    "defillama_id": "0660914e-b7a9-4774-b2ad-28e7c16716f8",
+    "our_pool_id": "USDT_Polygon_beefy_Morpho"
+  },
+  {
+    "defillama_id": "cde81ba0-9ba4-4394-8c47-daa2efba557e",
+    "our_pool_id": "USDC_Ethereum_ribbon_Put-Selling"
+  },
+  {
+    "defillama_id": "5a49dee1-344d-4b50-a167-8f5faab08752",
+    "our_pool_id": "USDC_Linea_aave-v3"
+  },
+  {
+    "defillama_id": "ab8a1d61-fd57-4ebf-b926-7c9da9028f0f",
+    "our_pool_id": "USDT_Ethereum_stargate-v1"
+  },
+  {
+    "defillama_id": "f80f8fd7-d547-4bf7-8dde-4da4dfa6f35e",
+    "our_pool_id": "USDC_Optimism_acryptos_Moonwell"
+  },
+  {
+    "defillama_id": "fa4d7ee4-0001-4133-9e8d-cf7d5d194a91",
+    "our_pool_id": "USDC_Ethereum_flux-finance"
+  },
+  {
+    "defillama_id": "1ed28542-3042-4cc4-826d-7313a6502a61",
+    "our_pool_id": "USDC_Ethereum_strike"
+  },
+  {
+    "defillama_id": "9aa03f4b-f037-40da-b91c-6708199a45ba",
+    "our_pool_id": "USDC.E_Sonic_silo-v2_27"
+  },
+  {
+    "defillama_id": "94637232-be8f-4049-9194-31feceb92eef",
+    "our_pool_id": "USDT_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "933a582d-7f56-4db8-abb7-bb0876e41568",
+    "our_pool_id": "USDC.E_Gnosis_spark"
+  },
+  {
+    "defillama_id": "745b5b20-c9dc-4d3e-8c74-9fa3d3d81830",
+    "our_pool_id": "USDC_Polygon_aave-v2"
+  },
+  {
+    "defillama_id": "897011b3-338f-480a-95f7-7322ba0cc53a",
+    "our_pool_id": "USDC_Aptos_aries-markets"
+  },
+  {
+    "defillama_id": "1fcb6651-c90b-4135-866a-2e3187b23059",
+    "our_pool_id": "USDT_BSC_kinza-finance"
+  },
+  {
+    "defillama_id": "75142b16-247d-4cf2-b2f1-2c940b59185d",
+    "our_pool_id": "USDC_Kujira_ghost"
+  },
+  {
+    "defillama_id": "a60bf565-51ad-47fd-b4cd-6c84b0d7b40a",
+    "our_pool_id": "USDC_Ethereum_beefy_Compound"
+  },
+  {
+    "defillama_id": "be6311f6-e0e8-45cf-81f2-3ab8e99dd531",
+    "our_pool_id": "USDC_Ethereum_opyn-squeeth_Crab USDC"
+  },
+  {
+    "defillama_id": "db68510c-776e-4448-bece-8ed277c4e274",
+    "our_pool_id": "USDC_Polygon_gains-network"
+  },
+  {
+    "defillama_id": "e5d64a40-6d3a-4ee2-adcb-6787d892fbf9",
+    "our_pool_id": "DAI_Ethereum_ipor-fusion_IPOR DAI Lending Optimizer Ethereum"
+  },
+  {
+    "defillama_id": "339444e1-3734-47d0-808d-50844af52090",
+    "our_pool_id": "USDT_Ethereum_strike"
+  },
+  {
+    "defillama_id": "ab8fbc9d-8376-4f03-99dc-7548d6124588",
+    "our_pool_id": "DAI_Ethereum_ipor-derivatives"
+  },
+  {
+    "defillama_id": "08d03a8c-4f97-486c-b69d-0c1392c20a92",
+    "our_pool_id": "USDT_Avalanche_deltaprime"
+  },
+  {
+    "defillama_id": "5d0f5392-1e0d-4ff8-a780-718241e3c8df",
+    "our_pool_id": "USDC_Neutron_mars-lend_10 days unstaking"
+  },
+  {
+    "defillama_id": "729ed5f3-36f6-4004-98f4-d0deeb337f31",
+    "our_pool_id": "USDC_Ethereum_nayms_KF1SA, Financial  Loss (Status: WINDING_DOWN)"
+  },
+  {
+    "defillama_id": "b60766f1-8002-446d-9994-325a74aa21c0",
+    "our_pool_id": "USDC_Fantom_granary-finance"
+  },
+  {
+    "defillama_id": "24fe98a4-10ce-4690-903b-ac605e599093",
+    "our_pool_id": "USDC_Arbitrum_ipor-derivatives"
+  },
+  {
+    "defillama_id": "4a9be2c2-e049-468a-b91a-7499929f06cb",
+    "our_pool_id": "USDC_Polygon_maxapy"
+  },
+  {
+    "defillama_id": "8d9818f8-ebdc-4672-9eb8-18db489a374e",
+    "our_pool_id": "USDC.E_Flare_kinetic"
+  },
+  {
+    "defillama_id": "3a7ddba8-871c-4dbd-b369-94000fcd6b35",
+    "our_pool_id": "DAI_Ethereum_strike"
+  },
+  {
+    "defillama_id": "f0d19054-2087-4b64-8b16-754e953f3f49",
+    "our_pool_id": "USDC.E_Avalanche_joe-lend"
+  },
+  {
+    "defillama_id": "f1a2ee8e-0595-44d1-b971-190673d1ef72",
+    "our_pool_id": "USDT_Rootstock_sovryn-dex"
+  },
+  {
+    "defillama_id": "31aa2619-5790-4adb-8a50-1c153a2d6820",
+    "our_pool_id": "USDC_Stellar_blend-pools_YieldBlox Pool"
+  },
+  {
+    "defillama_id": "782620ae-0fcc-40c6-a428-b035d0c3ee4a",
+    "our_pool_id": "USDC_Base_woofi-earn_SuperchargerV2"
+  },
+  {
+    "defillama_id": "7dfb991e-7215-42eb-9fe4-9938d056e7fe",
+    "our_pool_id": "USDC_BSC_kinza-finance"
+  },
+  {
+    "defillama_id": "ef77cd5b-905f-4bd0-9675-b356697aaf2d",
+    "our_pool_id": "USDC_Optimism_woofi-earn_SuperchargerV2"
+  },
+  {
+    "defillama_id": "c9385dd7-b4ac-4a74-9b6e-631672a90b28",
+    "our_pool_id": "USDC_Core_colend-protocol"
+  },
+  {
+    "defillama_id": "d55564a5-99da-4c97-b0fc-abb5a7b81121",
+    "our_pool_id": "USDC_Linea_mendi-finance"
+  },
+  {
+    "defillama_id": "099d7bf7-e56f-46f9-8771-8721ce8872bf",
+    "our_pool_id": "USDC_Ethereum_conic-finance"
+  },
+  {
+    "defillama_id": "766ccc08-ba7c-4f94-b2fd-336ccc53c53b",
+    "our_pool_id": "USDC_Gnosis_aave-v3"
+  },
+  {
+    "defillama_id": "93fb2190-0c2e-4265-a47a-99903c1d9bc9",
+    "our_pool_id": "AUSD_Avalanche_yield-yak-aggregator_benqi"
+  },
+  {
+    "defillama_id": "a2e7bb87-b339-44d9-91d7-87a04552afe9",
+    "our_pool_id": "USDT_BSC_stargate-v1"
+  },
+  {
+    "defillama_id": "4bba2ff6-7723-47d1-8825-4a6d08626a1f",
+    "our_pool_id": "USDT_Avalanche_stargate-v1"
+  },
+  {
+    "defillama_id": "341a959d-8ed9-4a18-955c-e54dfb4361b7",
+    "our_pool_id": "USDT_IOTA EVM_iolend"
+  },
+  {
+    "defillama_id": "d07783c3-bd68-4e38-927f-762fcb349dfc",
+    "our_pool_id": "DAI_Ethereum_vesper_Aggressive"
+  },
+  {
+    "defillama_id": "b2aeef3e-e706-4d17-a00c-9d2d8085492e",
+    "our_pool_id": "USDC_Polygon_stargate-v1"
+  },
+  {
+    "defillama_id": "ded5a210-d0f3-4c36-9d83-fb890d88eae0",
+    "our_pool_id": "USDC_Ethereum_clearpool-lending_USDC (Portofino Technologies)"
+  },
+  {
+    "defillama_id": "bbd7450a-bef9-451a-9509-36b86a622b86",
+    "our_pool_id": "USDC_Arbitrum_stargate-v1"
+  },
+  {
+    "defillama_id": "f988235b-39ab-43b4-a0e9-5ce2cd1924cb",
+    "our_pool_id": "AUSD_Mantle_lendle"
+  },
+  {
+    "defillama_id": "38f9ef64-e275-4a28-871a-f097c8fe25d8",
+    "our_pool_id": "USDT_BSC_woofi-earn_SuperchargerV2"
+  },
+  {
+    "defillama_id": "fe97de63-d5ed-416e-b11f-ffb1e7bd3f7c",
+    "our_pool_id": "USDC_Polygon_beefy_Morpho"
+  },
+  {
+    "defillama_id": "abf4a68e-c79c-4b2b-a459-49f1b7bf0c29",
+    "our_pool_id": "USDC_Optimism_exactly_2025-05-08"
+  },
+  {
+    "defillama_id": "87d1c729-e7e6-413a-a523-eb6d9545fe63",
+    "our_pool_id": "USDC_Optimism_exactly_2025-08-28"
+  },
+  {
+    "defillama_id": "aae80a35-37fa-4795-848f-7e222e2d9252",
+    "our_pool_id": "USDC_Optimism_exactly_2025-07-31"
+  },
+  {
+    "defillama_id": "b52a8735-576d-467b-9449-1b4dcb83cf0d",
+    "our_pool_id": "USDC_Optimism_exactly_2025-09-25"
+  },
+  {
+    "defillama_id": "9e6bd721-3862-42fc-9015-4c2916197938",
+    "our_pool_id": "USDC_Optimism_exactly"
+  },
+  {
+    "defillama_id": "ec58a3ea-e68d-4a6a-af40-23fb24c8ff7e",
+    "our_pool_id": "USDC_Optimism_exactly_2025-06-05"
+  },
+  {
+    "defillama_id": "e7eacd3c-ffec-4948-ad84-f996442d2c1a",
+    "our_pool_id": "USDC_Optimism_exactly_2025-07-03"
+  },
+  {
+    "defillama_id": "c8b49b2e-00f4-4769-bde2-c2d4f54c5ecc",
+    "our_pool_id": "USDC_Optimism_exactly_2025-04-10"
+  },
+  {
+    "defillama_id": "8ca17fc6-018b-46d4-9bfb-f2b5e981a0fb",
+    "our_pool_id": "USDT_Ethereum_dforce"
+  },
+  {
+    "defillama_id": "11c94295-5b61-4d28-8792-79464de3c68a",
+    "our_pool_id": "DAI_Arbitrum_hop-protocol"
+  },
+  {
+    "defillama_id": "483bfa23-9706-4f9a-935b-dad09ad2db98",
+    "our_pool_id": "USDT_MultiversX_hatom-lending"
+  },
+  {
+    "defillama_id": "3c8c3734-d1c8-4226-993a-c19775bfa6da",
+    "our_pool_id": "USDT_Arbitrum_stargate-v1"
+  },
+  {
+    "defillama_id": "ad10109d-3233-4a62-ac84-013a424e3651",
+    "our_pool_id": "DAI_Gnosis_hop-protocol"
+  },
+  {
+    "defillama_id": "72a1d041-4b13-45b0-ac95-066ec9819b3b",
+    "our_pool_id": "DAI_Cronos_tectonic"
+  },
+  {
+    "defillama_id": "41a1b6da-f65f-4f0e-81e6-bc56ef12c295",
+    "our_pool_id": "USDC_Polygon_symbiosis"
+  },
+  {
+    "defillama_id": "bc1b23f8-4816-4f2e-86ba-0922e1878b33",
+    "our_pool_id": "USDC_Base_harvest-finance_ExtraFi - Lend Pool #2"
+  },
+  {
+    "defillama_id": "527abdc2-bffe-4114-be35-9e45bbe57618",
+    "our_pool_id": "USDC_Ethereum_idle_Senior Best Yield"
+  },
+  {
+    "defillama_id": "af4a6664-bc80-4387-a0eb-761b181ce58c",
+    "our_pool_id": "USDT_Linea_mendi-finance"
+  },
+  {
+    "defillama_id": "5111f759-0a63-4ada-9b51-bfbbb39b438a",
+    "our_pool_id": "USDC_Arbitrum_yldr"
+  },
+  {
+    "defillama_id": "ee7e9a90-b248-486f-9032-d96bb98aa14e",
+    "our_pool_id": "GHO_Arbitrum_vela-exchange_VLP"
+  },
+  {
+    "defillama_id": "ddafe2fb-757a-45dd-87b5-a2c42dc9e093",
+    "our_pool_id": "USDC_Arbitrum_vela-exchange_VLP"
+  },
+  {
+    "defillama_id": "814326a1-e8f9-4dcd-9b35-952350ab74f7",
+    "our_pool_id": "FRAX_Ethereum_aave-v3_etherfi-market"
+  },
+  {
+    "defillama_id": "8b0cb80b-03ba-4be7-86c4-2ac06bbf069a",
+    "our_pool_id": "USDC_Optimism_extra-finance-xlend"
+  },
+  {
+    "defillama_id": "7be4f8c2-d5c6-4961-bbec-e362fa4a1f4a",
+    "our_pool_id": "USDT_Arbitrum_allbridge-classic"
+  },
+  {
+    "defillama_id": "6f9fe8c4-9676-4fef-9b7b-02be2430d7d9",
+    "our_pool_id": "USDT_Optimism_moonwell"
+  },
+  {
+    "defillama_id": "2aaca58d-e93b-4368-8978-7e59a3cc7b55",
+    "our_pool_id": "USDC_Arbitrum_yearn-finance"
+  },
+  {
+    "defillama_id": "38567bdf-764b-4209-a4e6-2a6facfba909",
+    "our_pool_id": "USDC_Base_balmy_Morpho"
+  },
+  {
+    "defillama_id": "30c30366-ef53-4bdd-9f48-7531ed6faf9d",
+    "our_pool_id": "GHO_Ethereum_gearbox"
+  },
+  {
+    "defillama_id": "c24d9138-51aa-48f4-a445-7f33bf7bf5fb",
+    "our_pool_id": "USDC_Ethereum_stargate-v1"
+  },
+  {
+    "defillama_id": "d3b5e811-c8cc-43be-9299-d57db4636ee8",
+    "our_pool_id": "USDC_Ethereum_sherlock"
+  },
+  {
+    "defillama_id": "b4e32770-57c5-4abc-82ff-afa8475d957a",
+    "our_pool_id": "USDC_Arbitrum_beefy_Equilibria-26Jun25"
+  },
+  {
+    "defillama_id": "8d203a10-f5d2-4f4c-8fba-7d31b3c89e71",
+    "our_pool_id": "USDC_Avalanche_stargate-v1"
+  },
+  {
+    "defillama_id": "d7990c27-e686-4a9e-9f59-3116f9d2907a",
+    "our_pool_id": "USDT_BSC_cadabra-finance"
+  },
+  {
+    "defillama_id": "14f0cec2-e17c-40a4-a810-47d8056f9cb4",
+    "our_pool_id": "USDC_Kujira_ghost"
+  },
+  {
+    "defillama_id": "8fbe28b8-140d-4e37-8804-5d2aba4daded",
+    "our_pool_id": "USDT_Ethereum_spark"
+  },
+  {
+    "defillama_id": "6bc3b57d-3e8f-4ee1-ac3c-f1a7740b745e",
+    "our_pool_id": "USDC.E_Flare_kinetic"
+  },
+  {
+    "defillama_id": "da66893f-7d5d-4e1d-bcf4-64ee3ad539f9",
+    "our_pool_id": "USDC_Solana_pluto"
+  },
+  {
+    "defillama_id": "e7c6c700-6161-4864-8405-0c3dea87d5ba",
+    "our_pool_id": "USDT_Polygon_hop-protocol"
+  },
+  {
+    "defillama_id": "4e080fc2-18cb-40c7-b11c-ddeee1e820b7",
+    "our_pool_id": "USDT_Optimism_acryptos_Moonwell"
+  },
+  {
+    "defillama_id": "fcac5295-d56b-4707-9355-5e15c55c471d",
+    "our_pool_id": "USDT_Solana_francium"
+  },
+  {
+    "defillama_id": "3c8d118e-02c2-4dbd-8d7b-e93f44409a07",
+    "our_pool_id": "USDC_Polygon_allbridge-classic"
+  },
+  {
+    "defillama_id": "ca8c0908-e156-4d90-8a32-6c47de938c6b",
+    "our_pool_id": "USDC_Boba_Bnb_symbiosis"
+  },
+  {
+    "defillama_id": "5f2ad06d-5e9f-43a0-9ed4-5bfc3933bab3",
+    "our_pool_id": "DAI_Ethereum_harvest-finance_Sky - Savings"
+  },
+  {
+    "defillama_id": "3a70f7dc-a65e-4db6-b20f-cd78f98de79e",
+    "our_pool_id": "USDC_Solana_psyoptions_Cash Secured Put"
+  },
+  {
+    "defillama_id": "7368c365-8280-4f4c-99dd-d7a989b31176",
+    "our_pool_id": "DAI_Ethereum_idle_Senior Best Yield"
+  },
+  {
+    "defillama_id": "0860763b-f949-4e38-8eba-22ffe14d400f",
+    "our_pool_id": "USDT_Gnosis_spark"
+  },
+  {
+    "defillama_id": "d658d4e9-15b5-490c-8307-c3f2160b6da8",
+    "our_pool_id": "USDT_Cardano_liqwid"
+  },
+  {
+    "defillama_id": "f4145118-4b17-4e11-9fdd-fd5b118bbde3",
+    "our_pool_id": "FRAX_Ethereum_flux-finance"
+  },
+  {
+    "defillama_id": "96c80325-f7c3-40a6-a4e0-81a9b9d9dd92",
+    "our_pool_id": "USDC_Ethereum_clearpool-lending_USDC (Wintermute)"
+  },
+  {
+    "defillama_id": "d6cf9272-a990-46b5-b04a-40ca84075f4a",
+    "our_pool_id": "USDC_Polygon_ensuro_Koala Jr Pool"
+  },
+  {
+    "defillama_id": "b6d41555-60e5-485f-9629-ae292c563a5d",
+    "our_pool_id": "LUSD_Arbitrum_aave-v3"
+  },
+  {
+    "defillama_id": "546c918d-e16f-485a-b1aa-0eddb3f7c3b8",
+    "our_pool_id": "USDT_Polygon_stargate-v1"
+  },
+  {
+    "defillama_id": "c287036d-282d-449c-b423-b5340fc52676",
+    "our_pool_id": "USDC_Solana_vaultka"
+  },
+  {
+    "defillama_id": "59da166b-4577-4159-b04f-b6fe546cac4a",
+    "our_pool_id": "USDT_Mantle_stargate-v1"
+  },
+  {
+    "defillama_id": "d3d8221f-9279-4daa-8612-eea36625986f",
+    "our_pool_id": "USDC_Arbitrum_yearn-finance"
+  },
+  {
+    "defillama_id": "63ce453d-df53-484a-b115-d28ada2254a2",
+    "our_pool_id": "USDC_Ethereum_vesper_Conservative"
+  },
+  {
+    "defillama_id": "341123b4-b690-4d10-b2f8-b8fa64119220",
+    "our_pool_id": "USDC_Mantle_lendle"
+  },
+  {
+    "defillama_id": "6817bab0-5389-40a0-84d1-78830c1d81aa",
+    "our_pool_id": "USDT_Linea_aave-v3"
+  },
+  {
+    "defillama_id": "8a927475-22c7-4792-946f-5187bfbff777",
+    "our_pool_id": "USDT_Polygon_allbridge-classic"
+  },
+  {
+    "defillama_id": "643e883f-6922-4c89-82c3-bf3ac260fe1f",
+    "our_pool_id": "USDC_Arbitrum_compound-v3"
+  },
+  {
+    "defillama_id": "d5fe1723-39e3-4a30-aac2-508f15a96149",
+    "our_pool_id": "USDC.E_Optimism_extra-finance-leverage-farming"
+  },
+  {
+    "defillama_id": "09030bc2-0adc-4e48-b31b-d6439059e906",
+    "our_pool_id": "USDC_Ethereum_zerolend"
+  },
+  {
+    "defillama_id": "9844a415-30e6-4005-a727-ce5febecc64a",
+    "our_pool_id": "USDC_Arbitrum_harmonix-finance"
+  },
+  {
+    "defillama_id": "b6b916a2-c680-4d92-9065-75e424ea0187",
+    "our_pool_id": "USDC_BSC_cadabra-finance"
+  },
+  {
+    "defillama_id": "144233d0-32a4-4143-ac81-cc88334ef33d",
+    "our_pool_id": "USDT_Arbitrum_hop-protocol"
+  },
+  {
+    "defillama_id": "0b108cbb-24bf-412f-b3b0-93729b7fbf18",
+    "our_pool_id": "USDT_Linea_zerolend"
+  },
+  {
+    "defillama_id": "e8d6f558-e0a1-453a-bd8b-f7e7129cc6dd",
+    "our_pool_id": "USDC.E_IOTA EVM_iolend"
+  },
+  {
+    "defillama_id": "d4019537-521c-4f63-85f7-bd5cea38c113",
+    "our_pool_id": "USDT_Ethereum_harvest-finance_Fluid"
+  },
+  {
+    "defillama_id": "6f591cd0-f1de-4591-afa7-355b58ea95a4",
+    "our_pool_id": "USDC_Ethereum_teller_MASA"
+  },
+  {
+    "defillama_id": "0a3a0bb9-8102-4cbe-b402-225189b36594",
+    "our_pool_id": "USDT_Arbitrum_harvest-finance_Fluid"
+  },
+  {
+    "defillama_id": "7fc4cebd-634e-49ac-a64a-f52a1c841fde",
+    "our_pool_id": "USDC_Nolus_nolus-protocol"
+  },
+  {
+    "defillama_id": "bb235788-a360-4e29-ab59-e33e884b0050",
+    "our_pool_id": "DAI_Optimism_hop-protocol"
+  },
+  {
+    "defillama_id": "dce58852-9976-4141-b26a-a832c5edc34e",
+    "our_pool_id": "USDT_Mantle_lendle"
+  },
+  {
+    "defillama_id": "b5ddecfc-89b7-43a2-8911-39856221e530",
+    "our_pool_id": "USDC_Polygon_yldr"
+  },
+  {
+    "defillama_id": "89097325-9824-450d-8edf-078db4447e2d",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "404b24f7-5a22-4b7e-82b2-e1cf3582d33a",
+    "our_pool_id": "USDC_Arbitrum_harvest-finance_Dolomite"
+  },
+  {
+    "defillama_id": "9a5f6bad-29d1-4fc2-b913-3adb5d394349",
+    "our_pool_id": "USDC_Moonbeam_moonwell"
+  },
+  {
+    "defillama_id": "8a561627-3d0c-436a-805c-8490c68fe014",
+    "our_pool_id": "USDT_zkSync Era_aave-v3"
+  },
+  {
+    "defillama_id": "4cba4337-da47-436d-bd4e-a330948ddc8e",
+    "our_pool_id": "USDC_Polygon_ensuro_Spot Jr Pool"
+  },
+  {
+    "defillama_id": "5257dd93-149b-403a-867f-a961c71fb812",
+    "our_pool_id": "USDC_Avalanche_joe-lend"
+  },
+  {
+    "defillama_id": "4bc7b297-b1c3-4c11-9c5f-5b96023ace65",
+    "our_pool_id": "USDC_Boba_symbiosis"
+  },
+  {
+    "defillama_id": "9f5ca71c-17a2-4c0d-90d1-553c85124805",
+    "our_pool_id": "USDT_Avalanche_joe-lend"
+  },
+  {
+    "defillama_id": "8eec81e1-84bc-4fd2-9fc8-7a5e5fb44857",
+    "our_pool_id": "USDC.E_Sonic_silo-v2_36"
+  },
+  {
+    "defillama_id": "a9aa4af8-a47f-4096-9d12-dbd6f5a12a4f",
+    "our_pool_id": "USDC_Starknet_nimbora-yield_nstUSD"
+  },
+  {
+    "defillama_id": "de28f35f-2b98-4579-943f-40aa35d197e8",
+    "our_pool_id": "USDC_Bifrost Network_bifi"
+  },
+  {
+    "defillama_id": "3067acd9-0003-47ad-a4df-9df85485fb7b",
+    "our_pool_id": "DAI_Polygon_hop-protocol"
+  },
+  {
+    "defillama_id": "6f397c64-57f5-4d3e-a62f-fa7221a7547e",
+    "our_pool_id": "USDC_Arbitrum_beefy_Magpie-26Jun25"
+  },
+  {
+    "defillama_id": "3441a15d-5f50-4a52-af27-597c182c5c4a",
+    "our_pool_id": "USDT_Mantle_minterest"
+  },
+  {
+    "defillama_id": "0d0b2af7-1ad4-41b8-ac92-ce2b76490769",
+    "our_pool_id": "USDC_Ethereum_nayms_ESA01, Crime, Specie (Status: WINDING_DOWN)"
+  },
+  {
+    "defillama_id": "61b74378-2770-411e-899b-550d4b8b6a44",
+    "our_pool_id": "USDC.E_Sonic_impermax-finance_Shadow USDC.e/STBL"
+  },
+  {
+    "defillama_id": "346350a5-70d8-470f-b170-cca036c6e75a",
+    "our_pool_id": "DAI_Optimism_acryptos_Moonwell"
+  },
+  {
+    "defillama_id": "70c7a3b7-86e4-4938-859f-8e32a6d5cfc1",
+    "our_pool_id": "USDC_Base_beefy_Equilibria-26Jun25"
+  },
+  {
+    "defillama_id": "4c3961c5-3f57-46dd-98bb-804ab30e4d57",
+    "our_pool_id": "USDC_Base_harvest-finance_ExtraFi - Lend"
+  },
+  {
+    "defillama_id": "4ef4eb9a-e22e-4190-b8f3-8c75373ad0d6",
+    "our_pool_id": "FRAX_Ethereum_aave-v3"
+  },
+  {
+    "defillama_id": "ae619265-65fd-4584-8934-16a66dc50af3",
+    "our_pool_id": "USDC_Mantle_minterest"
+  },
+  {
+    "defillama_id": "62ef724a-0a2f-4ff5-b63e-3aa51df36f29",
+    "our_pool_id": "USDC_zkSync Era_zerolend"
+  },
+  {
+    "defillama_id": "73e645bf-f5a1-490d-9111-123d7882d16a",
+    "our_pool_id": "USDC_Ethereum_sturdy-v2_Usual aggregator"
+  },
+  {
+    "defillama_id": "cacebee3-635c-466f-91fe-32d796cdd252",
+    "our_pool_id": "USDC_Optimism_extra-finance-leverage-farming"
+  },
+  {
+    "defillama_id": "fd1e4170-f24d-41d7-aa31-794b25ef05f7",
+    "our_pool_id": "DAI_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "47e1e6bf-1a78-44a8-a13f-e4bf08763c0e",
+    "our_pool_id": "USDT_Arbitrum_harvest-finance_Dolomite"
+  },
+  {
+    "defillama_id": "745d6181-8bbf-4cab-91fb-7cee38d137c4",
+    "our_pool_id": "DAI_Ethereum_stakedao_Yearn"
+  },
+  {
+    "defillama_id": "b6fdb4b4-569c-4e1d-a5a6-ed9885e04c60",
+    "our_pool_id": "USDC_Ethereum_aave-v3_etherfi-market"
+  },
+  {
+    "defillama_id": "29b7ca10-22f6-483b-96ba-0d1761d4facc",
+    "our_pool_id": "USDC.E_Sonic_goat-protocol"
+  },
+  {
+    "defillama_id": "34465531-aac9-4f49-b9bc-52b101f1c90e",
+    "our_pool_id": "USDC_Ethereum_teller_SPX"
+  },
+  {
+    "defillama_id": "45a43ff6-9320-4e40-9812-ba91d6f39307",
+    "our_pool_id": "DAI_Ethereum_uwu-lend"
+  },
+  {
+    "defillama_id": "48e8e005-41cd-4fbe-b806-47cf74a73d6b",
+    "our_pool_id": "USDC_Arbitrum_yearn-finance"
+  },
+  {
+    "defillama_id": "6dc5652b-c1f0-4871-ac8e-bff2eaddac2a",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "d8f76f0a-1649-4212-a96f-c09dd1fd9bb4",
+    "our_pool_id": "USD\u20ae0_Arbitrum_dolomite_Dolomite Balance"
+  },
+  {
+    "defillama_id": "6f007481-cd58-4b32-bac3-1ce9f19a3a07",
+    "our_pool_id": "USDC_Arbitrum_dolomite_Dolomite Balance"
+  },
+  {
+    "defillama_id": "7d769126-ec5b-4108-8a41-6c19ca8c656c",
+    "our_pool_id": "USDC_Ethereum_teller_PIXL"
+  },
+  {
+    "defillama_id": "4d9cfd14-b441-45fc-b4bd-84effc70d9e0",
+    "our_pool_id": "USDC.E_Polygon_allbridge-classic"
+  },
+  {
+    "defillama_id": "374659cf-0281-4f91-abdf-53f4145c534c",
+    "our_pool_id": "USDC_Base_clearpool-lending_USDC (Portofino Technologies)"
+  },
+  {
+    "defillama_id": "fd113d3c-019a-43c3-9dc3-925c50a01157",
+    "our_pool_id": "USDC_Ethereum_teller_BEAM"
+  },
+  {
+    "defillama_id": "d9f23708-a192-46c2-a2f0-baa4360f3672",
+    "our_pool_id": "USDC_Optimism_compound-v3_WETH-pool"
+  },
+  {
+    "defillama_id": "ab3092dc-6700-4136-9842-fea80d179d4d",
+    "our_pool_id": "USDC_Arbitrum_goat-protocol"
+  },
+  {
+    "defillama_id": "3bc65b72-1a42-42f7-9e39-eaa9f8f01da8",
+    "our_pool_id": "USDC_Cronos_single-finance"
+  },
+  {
+    "defillama_id": "8d4d3acb-e1bf-471a-8256-36b90a8f4d25",
+    "our_pool_id": "FRAX_Arbitrum_aave-v3"
+  },
+  {
+    "defillama_id": "30d03a2d-f857-472d-91e7-d10d6264765c",
+    "our_pool_id": "USDC_Arbitrum_gmd-protocol"
+  },
+  {
+    "defillama_id": "4ab9eb62-182b-4ead-ba6e-f8b229a31ccc",
+    "our_pool_id": "USDC_Scroll_rho-markets_Rho USDC Market"
+  },
+  {
+    "defillama_id": "61f8ea49-8293-49f4-a959-84b0ef8872b5",
+    "our_pool_id": "USDT_Ethereum_idle_Senior Best Yield"
+  },
+  {
+    "defillama_id": "e520a0a5-4bdd-4be1-a804-cdfd25a71711",
+    "our_pool_id": "USDC_Taiko_kiloex"
+  },
+  {
+    "defillama_id": "03884e17-a919-4a4b-a97f-0b449baeab2f",
+    "our_pool_id": "USDC_Ethereum_makerdao_USDC-A"
+  },
+  {
+    "defillama_id": "343ddd67-d8ff-4de4-85c1-f3b0f1cdff21",
+    "our_pool_id": "DAI_Starknet_nimbora-yield_nsDAI"
+  },
+  {
+    "defillama_id": "5a8d7827-00d9-416a-b1bb-ddc7f758a66e",
+    "our_pool_id": "USDC_Arbitrum_radiant-v1"
+  },
+  {
+    "defillama_id": "c9460460-c401-449b-b2e9-4b8407dd9d2e",
+    "our_pool_id": "GHO_Ethereum_sturdy-v2_GHO aggregator"
+  },
+  {
+    "defillama_id": "c4c77439-c791-418b-8fdd-1d5d8b21133f",
+    "our_pool_id": "USDC_Optimism_granary-finance"
+  },
+  {
+    "defillama_id": "1418e2ea-9a7f-44ff-b4b2-09e22fc22a61",
+    "our_pool_id": "USDC_Ethereum_smartcredit_30-90 days"
+  },
+  {
+    "defillama_id": "72cc4777-a498-4a89-a449-87cb05cf76c1",
+    "our_pool_id": "USDT_Arbitrum_cadabra-finance"
+  },
+  {
+    "defillama_id": "a8f6cd4a-3b4f-4c5b-9639-b8bc68627b4d",
+    "our_pool_id": "USDC_Cronos_zkevm_amply-finance"
+  },
+  {
+    "defillama_id": "54506699-8258-4426-88c2-a04892f1076a",
+    "our_pool_id": "USDT_Optimism_hop-protocol"
+  },
+  {
+    "defillama_id": "42e8b934-2df6-49e5-9170-70bc386a6f01",
+    "our_pool_id": "USDT_Ethereum_wing-finance"
+  },
+  {
+    "defillama_id": "4d0a111c-9c34-495b-b858-51a124f7e63e",
+    "our_pool_id": "USDC_Arbitrum_stream-finance_LEVUSDC"
+  },
+  {
+    "defillama_id": "2b8b7532-d2a6-4bd6-b3ca-66ff8c54a77d",
+    "our_pool_id": "USDT_Arbitrum_yama-finance_USDT PSM LP"
+  },
+  {
+    "defillama_id": "f83e5c85-8473-4036-82a1-a80205d333e4",
+    "our_pool_id": "USDC_Ethereum_harmonix-finance"
+  },
+  {
+    "defillama_id": "e6289b81-9825-4e1d-9ff0-90d7dff38577",
+    "our_pool_id": "USDT_Ton_evaa-protocol_Alts"
+  },
+  {
+    "defillama_id": "1dbb8d34-f29a-458b-8850-83399278fe06",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "9e127768-292f-4773-9289-2ce7997bb285",
+    "our_pool_id": "LUSD_Optimism_aave-v3"
+  },
+  {
+    "defillama_id": "3e2cb2f7-bc4d-46ba-950e-46cfcaa96a83",
+    "our_pool_id": "USDC_Ethereum_teller_APU"
+  },
+  {
+    "defillama_id": "c1043890-72c2-41cc-a941-e7cc124b5b2d",
+    "our_pool_id": "USDC_BSC_acryptos_Venus"
+  },
+  {
+    "defillama_id": "a83ea746-1cc2-44ef-ab91-3fc0459ff6d1",
+    "our_pool_id": "DAI_Optimism_beefy_Hop"
+  },
+  {
+    "defillama_id": "4948fcbe-f608-4c3c-9b27-4ecf1bb383a6",
+    "our_pool_id": "USDT_Bsquared_kiloex"
+  },
+  {
+    "defillama_id": "3b1c1801-f860-42ff-b853-4d2d56966c52",
+    "our_pool_id": "DAI_Optimism_moonwell"
+  },
+  {
+    "defillama_id": "698bf55b-1f51-45d5-b8d6-c27ccd0c28c0",
+    "our_pool_id": "USDC_Gnosis_spark"
+  },
+  {
+    "defillama_id": "8db29638-56de-488a-8b4a-991759ba1544",
+    "our_pool_id": "USDC_Arbitrum_compound-v3_WETH-pool"
+  },
+  {
+    "defillama_id": "ab9422bf-40a4-4770-a8a2-579ae04ba9f7",
+    "our_pool_id": "USDC.E_Sonic_yel-finance"
+  },
+  {
+    "defillama_id": "12a0aba6-8d08-4233-90c7-3868e88a7094",
+    "our_pool_id": "USDC_Solana_save_Stable Pool"
+  },
+  {
+    "defillama_id": "5153b9d1-c08c-4682-bcbb-d100437cbb71",
+    "our_pool_id": "USDT_Algorand_folks-finance-lending"
+  },
+  {
+    "defillama_id": "db0027c1-f340-44f9-b6b7-184d2df05d63",
+    "our_pool_id": "USDC_BSC_alpaca-finance-2.0"
+  },
+  {
+    "defillama_id": "56dc0613-8f1b-45aa-b3cf-23b0997c3340",
+    "our_pool_id": "USDC_Ethereum_impermax-finance_UniswapV2 USDC/USDT"
+  },
+  {
+    "defillama_id": "c11d614a-287f-4b6e-b96e-e34fdc44535e",
+    "our_pool_id": "DAI_Ethereum_hyperdrive_Matures in 182 days from position open"
+  },
+  {
+    "defillama_id": "9b255e6c-a36c-4bac-a93a-be70b6be90f5",
+    "our_pool_id": "USDC_Scroll_compound-v3"
+  },
+  {
+    "defillama_id": "f818c68b-c893-4e10-9c8e-f78a6afce58a",
+    "our_pool_id": "USDT_BSC_dforce"
+  },
+  {
+    "defillama_id": "860931e6-623b-4dd2-a020-81db6541e67e",
+    "our_pool_id": "DAI_Ethereum_inverse-finance-firm_Fixed Borrow Rate"
+  },
+  {
+    "defillama_id": "e5adf719-d8e7-4b36-a603-ed288483d13a",
+    "our_pool_id": "USDC_Base_radiant-v2"
+  },
+  {
+    "defillama_id": "cd5cca2d-ce54-46f2-8c31-3d9ce843e315",
+    "our_pool_id": "USDC_Polygon_affine-defi-earn_USDC.e Earn - Polygon"
+  },
+  {
+    "defillama_id": "beb4a91a-98e5-4ace-97fa-7892380bd905",
+    "our_pool_id": "USDT_Scroll_rho-markets_Rho USDT Market"
+  },
+  {
+    "defillama_id": "54dcf73b-8c2a-476e-afeb-f5b75f0c2ed8",
+    "our_pool_id": "USDC.E_Optimism_extra-finance-leverage-farming"
+  },
+  {
+    "defillama_id": "baf4a245-44d8-483e-a196-ecaff80213a0",
+    "our_pool_id": "USDT_Solana_vaultka"
+  },
+  {
+    "defillama_id": "103834fa-cd96-4522-96e0-2075244cb3bc",
+    "our_pool_id": "USDC_Ethereum_tokemak_autoUSD"
+  },
+  {
+    "defillama_id": "742d6444-46a3-4791-8495-83092914f86e",
+    "our_pool_id": "USDC.E_Arbitrum_aloe_WETH-pool"
+  },
+  {
+    "defillama_id": "a4040c0b-87fe-46eb-8394-086117ee176a",
+    "our_pool_id": "USDC_Starknet_hashstack"
+  },
+  {
+    "defillama_id": "ae703e6a-c47e-44bb-bb5d-ba65be18aa7e",
+    "our_pool_id": "USDC_Base_compound-v3_WETH-pool"
+  },
+  {
+    "defillama_id": "5b51e94c-083d-4762-8234-25ca9937ca57",
+    "our_pool_id": "USD\u20ae0_Arbitrum_lodestar-v1"
+  },
+  {
+    "defillama_id": "39befb5d-7613-4412-8528-9a38f5cf751d",
+    "our_pool_id": "USDT_Solana_save_LST Pool"
+  },
+  {
+    "defillama_id": "381eb971-56f8-468f-b2b6-ea922c477dca",
+    "our_pool_id": "USDC.E_Avalanche_benqi-lending"
+  },
+  {
+    "defillama_id": "8ad89053-0bf9-4a96-af53-60b60c40d761",
+    "our_pool_id": "USDT_BSC_acryptos_Venus"
+  },
+  {
+    "defillama_id": "5f64178a-5741-4d52-bbed-7d9793d81f61",
+    "our_pool_id": "DAI_Ethereum_hyperdrive_Matures in 182 days from position open"
+  },
+  {
+    "defillama_id": "53c0167f-2ad4-4c53-bdee-550d2d4f4f5b",
+    "our_pool_id": "USDC_Linea_beefy_Mendi"
+  },
+  {
+    "defillama_id": "5e64a2ba-a6d5-4dd3-bb56-77bf3bba4341",
+    "our_pool_id": "USDC_Polygon_prime-protocol"
+  },
+  {
+    "defillama_id": "1343a280-7812-4bc3-8f98-d1c37e11d271",
+    "our_pool_id": "USDT_Ethereum_morpho-aave"
+  },
+  {
+    "defillama_id": "1a4e4b4e-d839-4d72-a1a1-b6e0d8c3cb61",
+    "our_pool_id": "TUSD_Ethereum_compound-v2"
+  },
+  {
+    "defillama_id": "a52c41e0-8f04-4196-a7cc-9ab05617113e",
+    "our_pool_id": "USDC.E_Arbitrum_harvest-finance_Dolomite"
+  },
+  {
+    "defillama_id": "c10fae5d-17a9-4e48-a107-6ab1d8ead7eb",
+    "our_pool_id": "USDT_Linea_clip-finance"
+  },
+  {
+    "defillama_id": "4ba4e88a-ba42-498a-8b08-29b3c9dc6d6d",
+    "our_pool_id": "USDC_Astar_starlay-finance"
+  },
+  {
+    "defillama_id": "86c229b5-9ee7-45f4-913d-b6d8fdae6a5b",
+    "our_pool_id": "USDC.E_zkSync Era_harvest-finance_Venus"
+  },
+  {
+    "defillama_id": "6303c3d4-4b56-49ff-9be0-83d4bcdd2574",
+    "our_pool_id": "USDT_Ethereum_morpho-compound"
+  },
+  {
+    "defillama_id": "1686de3e-95f6-4ffe-bfc6-4626215a6fbc",
+    "our_pool_id": "USDC_Arbitrum_yldr"
+  },
+  {
+    "defillama_id": "7bb7a687-4884-4c39-9e33-e8f8f32b681f",
+    "our_pool_id": "USDC_Mantle_stargate-v1"
+  },
+  {
+    "defillama_id": "16be868c-7fdd-4570-bfd3-26f13fcd7b7a",
+    "our_pool_id": "USDT_Kava_mare-finance-v1"
+  },
+  {
+    "defillama_id": "0e84ae63-98ff-4b67-a355-9c3e1046e95c",
+    "our_pool_id": "DAI_Ethereum_dforce"
+  },
+  {
+    "defillama_id": "e596d484-3ca9-49b4-bde2-11de42376856",
+    "our_pool_id": "DAI_Astar_starlay-finance"
+  },
+  {
+    "defillama_id": "2cdeaa33-312d-4475-ae47-e64bdbd1fe5a",
+    "our_pool_id": "USDC_Base_harvest-finance_Morpho - Seamless"
+  },
+  {
+    "defillama_id": "54d8410e-d267-4dbe-9157-4db1cb885400",
+    "our_pool_id": "DAI_Arbitrum_deltaprime"
+  },
+  {
+    "defillama_id": "6ad8fcb4-ce16-4e8a-b1f5-1f4e2352cb29",
+    "our_pool_id": "USDC_Ethereum_beefy_Morpho"
+  },
+  {
+    "defillama_id": "41dbfbf5-ef9d-4188-b5d0-0a8fb7d1ac36",
+    "our_pool_id": "USDCE_Arbitrum_harvest-finance_Lodestar"
+  },
+  {
+    "defillama_id": "40e7c2b4-b894-4a97-b5d7-51d407066e9a",
+    "our_pool_id": "AUSD_Sui_navi-lending"
+  },
+  {
+    "defillama_id": "18f35f0c-9ca0-4562-a39a-d99234bcab47",
+    "our_pool_id": "USDC_Ethereum_wise-lending-v2_USDC"
+  },
+  {
+    "defillama_id": "7ef7618c-4801-4f01-9ed5-c55f64979a2b",
+    "our_pool_id": "DAI_Arbitrum_dforce"
+  },
+  {
+    "defillama_id": "96dd4deb-5832-4343-a151-4ad9c2f8600f",
+    "our_pool_id": "USDT_Gnosis_hop-protocol"
+  },
+  {
+    "defillama_id": "6c91c54c-259d-4820-acdb-c089854eaf8b",
+    "our_pool_id": "USDC_Ethereum_paraspace-lending-v1"
+  },
+  {
+    "defillama_id": "23004d53-05c0-4176-b6ab-88a1b45377aa",
+    "our_pool_id": "USDT_Ethereum_zerolend"
+  },
+  {
+    "defillama_id": "749280ad-ecea-4753-9672-386961758acd",
+    "our_pool_id": "DAI_Arbitrum_radiant-v1"
+  },
+  {
+    "defillama_id": "1f8d75b5-f5af-4222-bc16-074ff5e7dedb",
+    "our_pool_id": "USDC_Arbitrum_yearn-finance"
+  },
+  {
+    "defillama_id": "d7c455af-38eb-4845-86e2-9e59dfa6489a",
+    "our_pool_id": "USDC_Base_ionic-protocol"
+  },
+  {
+    "defillama_id": "00c4faf1-fba1-4cf5-87bc-a68f1e5c2aab",
+    "our_pool_id": "USDT_Solana_save_Jupiter LP Pool"
+  },
+  {
+    "defillama_id": "7b2bf9bb-9df7-4dac-ae42-a4d222e6c7e5",
+    "our_pool_id": "USDC_Linea_beefy_Mendi"
+  },
+  {
+    "defillama_id": "cf72775d-40fd-45f8-8082-732911c9ff59",
+    "our_pool_id": "USDC_Fantom_stargate-v1"
+  },
+  {
+    "defillama_id": "3600b328-8dc2-4046-b4a2-73639f40ca17",
+    "our_pool_id": "USDC_Base_acryptos_Moonwell"
+  },
+  {
+    "defillama_id": "cfed8fdd-213f-4e1c-afcc-8a3f3abb003d",
+    "our_pool_id": "DAI_Arbitrum_harvest-finance_Dolomite"
+  },
+  {
+    "defillama_id": "f02223ca-a69e-47df-8795-6657a8f829ee",
+    "our_pool_id": "TUSD_BSC_venus-core-pool"
+  },
+  {
+    "defillama_id": "948eb56a-b8fa-4b08-8c0d-453d8a6b787f",
+    "our_pool_id": "TUSD_Cronos_tectonic"
+  },
+  {
+    "defillama_id": "2573bfd8-1f72-4911-9c8b-881acbb32f56",
+    "our_pool_id": "USDC.E_Aurora_aurigami"
+  },
+  {
+    "defillama_id": "9f1dc854-7d00-4b46-a9ba-b27e3b4dd73d",
+    "our_pool_id": "USDCE_Ethereum_return-finance"
+  },
+  {
+    "defillama_id": "a1bf24b8-6eb9-4b89-9799-8488ed5245d1",
+    "our_pool_id": "USDC_Arbitrum_harmonix-finance"
+  },
+  {
+    "defillama_id": "b226c315-01f8-4d41-8157-8fcbaec7ec6b",
+    "our_pool_id": "USDT_Polygon_harvest-finance_Aave"
+  },
+  {
+    "defillama_id": "7e930fdf-5a52-4982-9ce3-0323fede4918",
+    "our_pool_id": "USDC_Base_morpho-blue"
+  },
+  {
+    "defillama_id": "c5f53253-269e-4b61-a9b8-b9b76cfa8480",
+    "our_pool_id": "USDT_Mantle_clearpool-lending_USDT (Arbelos Ltd)"
+  },
+  {
+    "defillama_id": "e5ef1f66-dd44-41e5-b19d-3402d7c9eb59",
+    "our_pool_id": "USDT_Starknet_hashstack"
+  },
+  {
+    "defillama_id": "866403a8-51b9-4e99-9526-8b708e0801fb",
+    "our_pool_id": "USDC_zkSync Era_zerolend"
+  },
+  {
+    "defillama_id": "5b43a732-d2a3-4860-ae64-b14766cb85d1",
+    "our_pool_id": "USDC_Ethereum_clearpool-lending_USDC (Alphanonce)"
+  },
+  {
+    "defillama_id": "427126ed-c960-41ef-bd83-06d38effd889",
+    "our_pool_id": "DAI_Ethereum_bancor-v3"
+  },
+  {
+    "defillama_id": "b869b6db-edd1-43e0-87e1-8dab647cf441",
+    "our_pool_id": "USDT_Polygon_dforce"
+  },
+  {
+    "defillama_id": "9f8aa2e0-50d9-44a5-ab0c-437ced0153b4",
+    "our_pool_id": "USDT_BSC_wing-finance"
+  },
+  {
+    "defillama_id": "4c0a6ed7-5479-498c-8fa0-c8c49dacd186",
+    "our_pool_id": "USDT_Ethereum_cream-lending"
+  },
+  {
+    "defillama_id": "b007a303-26b8-42ab-ab23-31dd7a44e8a3",
+    "our_pool_id": "FRAX_Moonbeam_moonwell"
+  },
+  {
+    "defillama_id": "dc157f2d-8b4d-4ae8-9d3b-68faa9f9c90f",
+    "our_pool_id": "USDC_Etherlink_superlend"
+  },
+  {
+    "defillama_id": "edc71819-9a1b-4295-87b4-c0c42c249775",
+    "our_pool_id": "USDT_Arbitrum_dforce"
+  },
+  {
+    "defillama_id": "07158f89-aa02-4b81-9747-2074541acf60",
+    "our_pool_id": "DAI_Linea_mendi-finance"
+  },
+  {
+    "defillama_id": "eb9b85c7-6f1d-40f3-90b0-45a2967bef1d",
+    "our_pool_id": "DAI_Cardano_liqwid"
+  },
+  {
+    "defillama_id": "594efe22-a169-44f2-9caa-415a053b38cb",
+    "our_pool_id": "USDT_Etherlink_superlend"
+  },
+  {
+    "defillama_id": "c336005f-974f-48ed-b957-2620aedf94f5",
+    "our_pool_id": "USD\u20ae0_Arbitrum_tender-finance"
+  },
+  {
+    "defillama_id": "7e380109-31b8-46fd-bd1b-7e95bfbd5143",
+    "our_pool_id": "SCUSD_Sonic_yel-finance"
+  },
+  {
+    "defillama_id": "7e7d22ab-5af9-4cb7-9b51-72beccc41c18",
+    "our_pool_id": "USDT_Ethereum_harvest-finance_ZeroLend"
+  },
+  {
+    "defillama_id": "4ea995cd-f67b-4283-97e5-96640f8de0c7",
+    "our_pool_id": "USDT_Arbitrum_radiant-v1"
+  },
+  {
+    "defillama_id": "d8733ab8-a147-4e31-a668-2c9dff24ea56",
+    "our_pool_id": "USDT_Mantle_clearpool-lending_USDT (Gravity Team)"
+  },
+  {
+    "defillama_id": "4754f09c-1e2b-4a46-8cc4-b1a0bd77840e",
+    "our_pool_id": "LUSD_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "b0b2fd7f-e32e-4171-b0b6-5d1a896e7dcb",
+    "our_pool_id": "DAI_BSC_dforce"
+  },
+  {
+    "defillama_id": "5d42d0b7-1bd1-445e-be50-1695b58a0041",
+    "our_pool_id": "USDT_Ontology_wing-finance"
+  },
+  {
+    "defillama_id": "089e31b2-98b8-47a8-a2a3-3f3cdec53bfb",
+    "our_pool_id": "USDC_Arbitrum_harvest-finance_Lodestar"
+  },
+  {
+    "defillama_id": "c983f18f-12ab-4893-977b-f7b03227eaef",
+    "our_pool_id": "USDT_Arbitrum_beefy_Compound"
+  },
+  {
+    "defillama_id": "f152ff88-dd31-4efb-a0a9-ad26b5536cc7",
+    "our_pool_id": "USDC_Arbitrum_tender-finance"
+  },
+  {
+    "defillama_id": "c1d7b89a-2f63-4d9e-bf56-f303b645ba96",
+    "our_pool_id": "USDC.E_Optimism_aloe_WETH-pool"
+  },
+  {
+    "defillama_id": "c74c1e98-c7c0-4619-8873-ba5ab548bede",
+    "our_pool_id": "USDC_Arbitrum_nabla-finance"
+  },
+  {
+    "defillama_id": "3543c8b2-0965-49ee-8e84-3e65075be9ee",
+    "our_pool_id": "AUSD_Avalanche_yield-yak-aggregator_stablejack"
+  },
+  {
+    "defillama_id": "224e6ae3-cae8-4269-86b0-c5c5ed7d47f5",
+    "our_pool_id": "DAI_Linea_zerolend"
+  },
+  {
+    "defillama_id": "fbbb30cd-ce26-45ae-93d1-44afee0f0461",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "0dd34b50-500d-4ff7-9d05-2a45a8e8e66d",
+    "our_pool_id": "USDC_Optimism_ionic-protocol"
+  },
+  {
+    "defillama_id": "64ae80d3-7695-45be-8676-79e2f3a0b725",
+    "our_pool_id": "USDC_Arbitrum_lodestar-v1"
+  },
+  {
+    "defillama_id": "8f753c7d-a064-4c58-b210-58f8f6577b5f",
+    "our_pool_id": "USDC_Base_impermax-finance_Scale SPECTRA/USDC"
+  },
+  {
+    "defillama_id": "d25cd9ec-ffaf-4630-9a13-8b03d577f12f",
+    "our_pool_id": "USDC_Arbitrum_vaultcraft"
+  },
+  {
+    "defillama_id": "5729306a-9a4a-49ef-905d-b61de95a5d6f",
+    "our_pool_id": "USDT_Mantle_clearpool-lending_USDT (Adaptive Frontier Limited)"
+  },
+  {
+    "defillama_id": "0dd80b6b-ba9e-45db-89e0-049d3d2efaeb",
+    "our_pool_id": "USDT_Sui_kai-finance"
+  },
+  {
+    "defillama_id": "75f244f2-569d-41b7-a306-0c98366984ea",
+    "our_pool_id": "DAI_Fantom_granary-finance"
+  },
+  {
+    "defillama_id": "35879c80-cb38-4541-99b5-9400c79b06d9",
+    "our_pool_id": "DAI_Optimism_extra-finance-xlend"
+  },
+  {
+    "defillama_id": "374a0ad9-3670-4daa-ba1e-cf82fde46d2d",
+    "our_pool_id": "USDC_Ethereum_zerolend"
+  },
+  {
+    "defillama_id": "9fbee93e-1d50-4dec-ae7e-a266b3329e6b",
+    "our_pool_id": "USDT_Arbitrum_harvest-finance_Lodestar"
+  },
+  {
+    "defillama_id": "7370ed71-cb60-4f6b-b628-e6da1aa890a8",
+    "our_pool_id": "DAI_Arbitrum_dolomite_Dolomite Balance"
+  },
+  {
+    "defillama_id": "a74a96de-f72a-42d6-a469-96fc2225ded0",
+    "our_pool_id": "LUSD_Ethereum_sandclock_Amber"
+  },
+  {
+    "defillama_id": "01a2ad37-57fb-4437-b78a-152fba599cb9",
+    "our_pool_id": "USDT_Arbitrum_wombex-finance_LP Pool"
+  },
+  {
+    "defillama_id": "f4abc541-5a57-49f9-8e5d-d6c3f985d247",
+    "our_pool_id": "USDC_Ethereum_bancor-v3"
+  },
+  {
+    "defillama_id": "31b970df-db83-4f78-8032-1941c0799784",
+    "our_pool_id": "USDC_Arbitrum_beefy_Equilibria-26Jun25"
+  },
+  {
+    "defillama_id": "6743155e-e177-4025-85c7-29d1383ed260",
+    "our_pool_id": "USDC_zkSync Era_harvest-finance_ZeroLend"
+  },
+  {
+    "defillama_id": "875c3133-5895-4bc3-be6c-42040ae497cd",
+    "our_pool_id": "USD\u20ae0_Arbitrum_compound-v3_WETH-pool"
+  },
+  {
+    "defillama_id": "a8890367-bea8-49b9-8e1a-ff6b855503e1",
+    "our_pool_id": "USDC_Polygon zkEVM_keom-protocol"
+  },
+  {
+    "defillama_id": "bbdac7d7-3c24-4053-8bff-65e222054553",
+    "our_pool_id": "USDC_Base_primex-finance"
+  },
+  {
+    "defillama_id": "f5e8dddd-e920-421a-8e41-b7becd697a66",
+    "our_pool_id": "USDT_Ethereum_conic-finance"
+  },
+  {
+    "defillama_id": "9a416adf-4d03-47a4-83c1-bd62360677b5",
+    "our_pool_id": "DAI_Base_moonwell"
+  },
+  {
+    "defillama_id": "fb9d232e-2fe6-401a-8b9d-afb9e7e8771a",
+    "our_pool_id": "USDT_Moonriver_moonwell-apollo"
+  },
+  {
+    "defillama_id": "d17714a2-a0a0-44ae-aabd-15a7fd02343b",
+    "our_pool_id": "USDT_Mode_ionic-protocol"
+  },
+  {
+    "defillama_id": "f718b27f-e4e1-455b-8f8e-b6fd486091e5",
+    "our_pool_id": "USDT_Optimism_clearpool-lending_USDT (Fasanara Investments Master Fund)"
+  },
+  {
+    "defillama_id": "487cc1bb-1f91-4eab-a7ea-06c5374d3105",
+    "our_pool_id": "USDC_Ethereum_teller_PRIME"
+  },
+  {
+    "defillama_id": "5fe59931-6b08-4d2e-8a8c-230dbccb4fd9",
+    "our_pool_id": "USDC_Ethereum_yearn-finance"
+  },
+  {
+    "defillama_id": "a38b7a27-4b0c-4333-8e5d-a6188d2996dd",
+    "our_pool_id": "USDC_Nolus_nolus-protocol"
+  },
+  {
+    "defillama_id": "bf0c372b-83ac-45d6-bc71-9a7f9c3ab217",
+    "our_pool_id": "USDT_Optimism_clearpool-lending_USDT (Portofino Technologies)"
+  },
+  {
+    "defillama_id": "e2ab1a59-6898-4dd0-b522-47a0a286fa12",
+    "our_pool_id": "USDT_Optimism_granary-finance"
+  },
+  {
+    "defillama_id": "945afa2b-4f81-422f-8f51-dc41c8aeb930",
+    "our_pool_id": "USDT_Canto_canto-lending"
+  },
+  {
+    "defillama_id": "ff8982a3-6fd8-4bd4-a997-8b523f4d4d37",
+    "our_pool_id": "USDC_BSC_alpaca-leveraged-yield-farming"
+  },
+  {
+    "defillama_id": "7ecf801f-26db-4cb2-a61e-0f87969e974b",
+    "our_pool_id": "USDC_Arbitrum_wise-lending-v2_aArbUSDCn"
+  },
+  {
+    "defillama_id": "e2319465-8b55-4444-a851-58bd8aa07d57",
+    "our_pool_id": "USDC_Arbitrum_lodestar-v1"
+  },
+  {
+    "defillama_id": "757821da-fb3b-4810-b143-8062fdf26abe",
+    "our_pool_id": "USDC_Base_yel-finance"
+  },
+  {
+    "defillama_id": "f96b09d0-0231-454a-a60e-380465e2ca09",
+    "our_pool_id": "USDT_zkSync Era_zerolend"
+  },
+  {
+    "defillama_id": "b980ce92-881c-4ec7-9ae8-40d0f7f3a1cc",
+    "our_pool_id": "USDC_Ethereum_mover"
+  },
+  {
+    "defillama_id": "3b6d0745-6a66-4fde-a276-67ccc2a73a70",
+    "our_pool_id": "USDC_Arbitrum_yearn-finance"
+  },
+  {
+    "defillama_id": "a3fa1a84-b588-4769-99ed-fdba6e8d185b",
+    "our_pool_id": "USDC_Ethereum_idle_Gearbox Junior Tranche"
+  },
+  {
+    "defillama_id": "a08447a1-32b2-4481-a069-79de677dbf77",
+    "our_pool_id": "USDT_Manta_zerolend"
+  },
+  {
+    "defillama_id": "2ffb8367-6f85-44fc-8958-f84d56719173",
+    "our_pool_id": "DAI_Polygon_stargate-v1"
+  },
+  {
+    "defillama_id": "3953f70f-fdb4-4b8d-a3cb-b72d369a691b",
+    "our_pool_id": "USDC.E_Taiko_kiloex"
+  },
+  {
+    "defillama_id": "3e69c600-553c-4b52-a9e4-5a3ea34933b7",
+    "our_pool_id": "USDC.E_Optimism_woofi-earn_SuperchargerV1"
+  },
+  {
+    "defillama_id": "52512ae4-02a0-455e-8077-d731c06ed6fa",
+    "our_pool_id": "USDC_BSC_green-planet"
+  },
+  {
+    "defillama_id": "eec9a73b-2d6a-4171-bad8-6c28efa09778",
+    "our_pool_id": "USDC_BSC_apeswap-lending"
+  },
+  {
+    "defillama_id": "e97151d7-7d14-4f93-b62b-ecdeade82f84",
+    "our_pool_id": "USDC_Mode_ionic-protocol"
+  },
+  {
+    "defillama_id": "c115fd19-b350-41f2-ac48-d3378e99c9ec",
+    "our_pool_id": "USDT_BSC_apeswap-lending"
+  },
+  {
+    "defillama_id": "58d19656-4e96-47b8-987a-816cedb39f4c",
+    "our_pool_id": "TUSD_Cronos_acryptos_Annex"
+  },
+  {
+    "defillama_id": "b718e8ee-c749-4152-9f3d-e3f9ff2da564",
+    "our_pool_id": "USDC_Ethereum_morpho-compound"
+  },
+  {
+    "defillama_id": "3a756645-0c80-4f6b-bab9-ebb63988b7d9",
+    "our_pool_id": "USDC_Ethereum_idle_Metamorpho Steakhouse Financial Junior Tranche"
+  },
+  {
+    "defillama_id": "6a2aacb8-2274-4ef1-938e-f4a03c2b07a2",
+    "our_pool_id": "USDC_Arbitrum_goldlink"
+  },
+  {
+    "defillama_id": "66b302f9-0e50-488e-a801-e49c5eb68f70",
+    "our_pool_id": "USDC_Manta_zerolend"
+  },
+  {
+    "defillama_id": "eae7f3dd-2791-4496-8e2d-7313c6ecad64",
+    "our_pool_id": "USD\u20ae0_Arbitrum_yldr"
+  },
+  {
+    "defillama_id": "603fd4b0-461b-4c46-9229-3a988353292f",
+    "our_pool_id": "USDC_Polygon_wefi"
+  },
+  {
+    "defillama_id": "f5699fa5-de14-4fd7-961f-7e64514ae6d4",
+    "our_pool_id": "USDT_Ethereum_paraspace-lending-v1"
+  },
+  {
+    "defillama_id": "5b09722a-b5e3-49a7-a5be-4fbc47d9e4f9",
+    "our_pool_id": "USDC_BSC_kiloex"
+  },
+  {
+    "defillama_id": "1e6a12f5-687c-4ce6-8416-af38f17954ea",
+    "our_pool_id": "DAI_Ethereum_morpho-compound"
+  },
+  {
+    "defillama_id": "248fd610-b300-470b-885f-3cf2991f1e2f",
+    "our_pool_id": "USDC_Arbitrum_prime-protocol"
+  },
+  {
+    "defillama_id": "f5d8c510-c64e-41dd-a959-4b36472e037d",
+    "our_pool_id": "USDT_BSC_wompie_Wombat"
+  },
+  {
+    "defillama_id": "7224ebe2-0187-4688-8310-df47c2f69e55",
+    "our_pool_id": "USDT_Linea_beefy_Mendi"
+  },
+  {
+    "defillama_id": "246ee0b2-434e-44dd-90a7-a728deaf1597",
+    "our_pool_id": "USDT_Kava_stargate-v1"
+  },
+  {
+    "defillama_id": "5a4c51a0-054a-4e25-8147-eda90bcf0d70",
+    "our_pool_id": "USDC_Base_yearn-finance"
+  },
+  {
+    "defillama_id": "11b3ddf4-328f-425c-b7fd-dc69bbcada23",
+    "our_pool_id": "USDT_Ethereum_wise-lending-v2_USDT"
+  },
+  {
+    "defillama_id": "b8f957d0-6505-430a-ae1a-dd2ac36ad98e",
+    "our_pool_id": "FRAX_Arbitrum_harvest-finance_Lodestar"
+  },
+  {
+    "defillama_id": "cc28d02f-6934-4e57-b58c-dea0e618b2e3",
+    "our_pool_id": "USDC_Arbitrum_yearn-finance"
+  },
+  {
+    "defillama_id": "9baee84c-3d94-4c24-9e38-604aea6e492d",
+    "our_pool_id": "USDC_Arbitrum_yearn-finance"
+  },
+  {
+    "defillama_id": "dcd35b19-aaf6-486e-ada7-fba8767ab757",
+    "our_pool_id": "USDC_Ethereum_dforce"
+  },
+  {
+    "defillama_id": "1f7a6f0d-4a8d-48d5-8cc6-9608810113be",
+    "our_pool_id": "USDT_Ethereum_smartcredit_30-90 days"
+  },
+  {
+    "defillama_id": "77f4bff3-6e81-4227-8103-89ce8ab983d1",
+    "our_pool_id": "USDC.E_Avalanche_symbiosis"
+  },
+  {
+    "defillama_id": "c945e558-3a1c-4fe0-9f22-db3b1ae96b6b",
+    "our_pool_id": "USDC_Optimism_clearpool-lending_USDC (Wincent)"
+  },
+  {
+    "defillama_id": "2b6fe6b0-62ba-4c76-9994-47f09875a421",
+    "our_pool_id": "USDC_Ethereum_fringe-v1_V1 markets"
+  },
+  {
+    "defillama_id": "ed9b37c8-f928-47c6-9317-dc30f97b4ff4",
+    "our_pool_id": "USDC_zkSync Era_harvest-finance_ReactorFusion"
+  },
+  {
+    "defillama_id": "c22d5240-8853-417a-8de1-b369e6ac8a29",
+    "our_pool_id": "USDC_Arbitrum_wompie_Wombat"
+  },
+  {
+    "defillama_id": "6029b96d-1238-4fa1-ac1b-3eb3d4db5c63",
+    "our_pool_id": "DAI_Base_harvest-finance_Moonwell"
+  },
+  {
+    "defillama_id": "4206e933-4f97-48db-96d5-c7d8c787ea7c",
+    "our_pool_id": "USDT_Optimism_clearpool-lending_USDT (Alphanonce)"
+  },
+  {
+    "defillama_id": "6920e180-2f1e-4181-9ec8-b901b2e399d1",
+    "our_pool_id": "FRAX_Avalanche_stargate-v1"
+  },
+  {
+    "defillama_id": "77143065-ddb5-4cc8-893f-aefb021ad837",
+    "our_pool_id": "USDC_Ethereum_fluid-lending"
+  },
+  {
+    "defillama_id": "bd7319a8-acff-42f2-b64f-253b40a45ccc",
+    "our_pool_id": "USDT_Solana_save_UXD Pool"
+  },
+  {
+    "defillama_id": "44cb5a09-bf3a-4940-8dc3-fae396bcfec2",
+    "our_pool_id": "USDC_Base_zerolend"
+  },
+  {
+    "defillama_id": "797f87e5-43c7-4f99-b955-f0aa8b9dcbc5",
+    "our_pool_id": "USDT_Polygon_yldr"
+  },
+  {
+    "defillama_id": "953061c0-2558-4997-8f10-4369fbde7dba",
+    "our_pool_id": "USDT_Ethereum_clearpool-lending_USDT (Fasanara Investments Master Fund)"
+  },
+  {
+    "defillama_id": "03a40d35-dd4d-4e1a-b995-385f8596c09f",
+    "our_pool_id": "USDC_Solana_save_Limited USDC Debt Pool"
+  },
+  {
+    "defillama_id": "28565fa6-95e8-4132-82f6-1e6d333366a1",
+    "our_pool_id": "USDT_zkSync Era_harvest-finance_Venus"
+  },
+  {
+    "defillama_id": "324f5064-a293-4426-a582-2bd3d408f401",
+    "our_pool_id": "USDT_Optimism_idle_Clearpool Fasanara Investments Junior Tranche"
+  },
+  {
+    "defillama_id": "7b743706-cfa8-4ae1-9ea6-35dc12685bfb",
+    "our_pool_id": "USDC.E_Sonic_silo-v2_33"
+  },
+  {
+    "defillama_id": "56ae3ce5-fe21-441d-88b7-0e4dffc57ab4",
+    "our_pool_id": "DAI_zkSync Era_zerolend"
+  },
+  {
+    "defillama_id": "aaa0f003-6309-4fd0-8ba7-aeacb95862c8",
+    "our_pool_id": "USDC_Ethereum_teller_LBTC"
+  },
+  {
+    "defillama_id": "629a864f-73cc-45ec-9a34-958335fe3ccc",
+    "our_pool_id": "USDC_Ethereum_teller_ONDO"
+  },
+  {
+    "defillama_id": "995e703e-2e11-4b92-b948-8d6659b4eb6c",
+    "our_pool_id": "USDC_Ethereum_teller_PEPE"
+  },
+  {
+    "defillama_id": "35845b87-7524-4d05-b356-02f8cf56e43d",
+    "our_pool_id": "USDC_Ethereum_teller_WBTC"
+  },
+  {
+    "defillama_id": "a9832f81-e792-4568-b382-f9eaa1d68bfa",
+    "our_pool_id": "USDC_Ethereum_teller_LINK"
+  },
+  {
+    "defillama_id": "1e00ac2b-0c3c-4b1f-95be-9378f98d2b40",
+    "our_pool_id": "GHO_Ethereum_aave-v3"
+  }
+]

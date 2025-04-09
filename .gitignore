@@ -1,65 +1,86 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Distribution / packaging
-dist/
+*.so
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
-
-# Virtual environments
-venv/
-env/
-.env/
-.venv/
-
-# IDE specific files
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Environment variables
-.env
-.env.local
-
-# Logs
-*.log
-/logs/*
+.installed.cfg
+*.egg
+MANIFEST
 
 # Unit test / coverage reports
 htmlcov/
 .tox/
+.nox/
 .coverage
 .coverage.*
+.cache
+nosetests.xml
 coverage.xml
 *.cover
+*.py,cover
+.hypothesis/
 .pytest_cache/
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.uv/
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Local development
+.python-version
+.env.local
+*.db
+*.sqlite
+
+# Docker
+.dockerignore
+
+# Package specific
+packages/*/dist/
+packages/*/build/
+packages/*/.eggs/
+packages/*/*.egg-info/
 
 # Documentation
 docs/_build/
 
-# Local development settings
-local_settings.py
+# Node.js (for potential frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Database
-*.db
-*.sqlite3
-
-# Other 
-.DS_Store
-.env.local
 
 AI_DOCS/
-
 
 .cursor/
