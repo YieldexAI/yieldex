@@ -9,15 +9,11 @@ description = "DeFi data collection service for YieldX platform"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "yieldex-common",
     "supabase>=2.0.0",
-    "fastapi>=0.104.0",
-    "pydantic>=2.4.2",
-    "uvicorn>=0.23.2",
     "httpx>=0.25.0",
-    "web3>=6.11.1",
-    "schedule>=1.2.0",
-    "requests>=2.32.3"
+    "requests>=2.32.3",
+    "python-dotenv>=1.1.0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]
@@ -34,7 +30,7 @@ dev = [
 packages = ["src/yieldex_data_collector"]
 
 [project.scripts]
-data-collector = "yieldex_data_collector.collector:main"
+data-collector = "yieldex_data_collector.collector:run_data_collection"
 
 [tool.hatch.metadata]
 allow-direct-references = true

@@ -1,12 +1,12 @@
 [project]
-name = "yieldex-monorepo"
+name = "yieldex"
 version = "0.1.0"
 description = "Monorepo for multiple Python microservices"
 requires-python = ">=3.11"
 dependencies = [
     # "yieldex-analyzer",                      # объявляем сервисы как зависимости
     # "yieldex-optimizer",
-    "yieldex-common",
+    # "yieldex-common",
     "yieldex-data-collector",
     # "yieldex-pool-link-updater",
     # "hatchling>=1.24",

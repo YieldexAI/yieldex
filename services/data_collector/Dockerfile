@@ -1,25 +1,34 @@
 FROM python:3.11-slim
 
-# Установить uv
+LABEL maintainer="exectrogod@gmail.com"
+LABEL description="Data collector service for Yieldex"
+LABEL version="0.1.0"
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cron \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir uv
 
 WORKDIR /app
 
-# Скопировать корневые файлы для резолвинга зависимостей
+# Copy root files
 COPY pyproject.toml uv.lock ./
 
-# Скопировать файлы для data-collector и общего пакета
-COPY services/data_collector ./services/data_collector
-COPY services/common ./services/common
+# Copy data-collector files to new directory structure
+COPY services/data_collector ./data_collector
 
-# Установить зависимости только для yieldex-data-collector
-RUN uv sync --package yieldex-data-collector --python=/usr/local/bin/python
+# Also copy config.yaml to the root of data_collector directory
+COPY services/data_collector/config.yaml ./data_collector/config.yaml
 
-# Обновить PATH, чтобы использовать виртуальное окружение (.venv)
+# Create virtual environment and install dependencies
+RUN uv venv && cd data_collector && uv pip install -e .
+
+# Update PATH to use virtual environment (.venv)
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Установить переменную окружения для логов и создать директорию
+# Set environment variable for logs and create directory
 ENV LOG_DIR=./logs
 RUN mkdir -p $LOG_DIR
-
-CMD ["python", "-m", "yieldex_data_collector.collector"]

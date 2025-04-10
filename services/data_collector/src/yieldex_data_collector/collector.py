@@ -10,12 +10,10 @@ from pathlib import Path
 import requests
 from supabase import create_client
 
-# Update imports to new structure
-from yieldex_common.config import SUPABASE_KEY, SUPABASE_URL
-from yieldex_data_collector.config import validate_env_vars
+from yieldex_data_collector.config import validate_env_vars, get_white_lists, load_config
 
 # Configure logging
-LOG_DIR = "/app/logs"
+LOG_DIR = os.getenv("LOG_DIR", "/app/logs")
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
@@ -38,36 +36,16 @@ file_handler = logging.FileHandler(log_filename)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
+# Console handler for Docker logs
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
 # Disable log propagation
 logger.propagate = False
 
-# Add configuration cache
-CONFIG_CACHE = {}
-LAST_CONFIG_UPDATE = 0
-CONFIG_UPDATE_INTERVAL = 600  # 10 minutes
-
-CONFIG_PATH = Path('/app/config/config.json')
-
-# Get interval from environment variable
-COLLECTION_INTERVAL = int(os.getenv('COLLECTION_INTERVAL', 300))
-
-def load_config():
-    try:
-        with open(CONFIG_PATH) as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {
-            'protocols': os.getenv('WHITE_LIST_PROTOCOLS', 'aave-v3,aave-v2').split(','),
-            'tokens': os.getenv('WHITE_LIST_TOKENS', 'USDT,USDC').split(',')
-        }
-
-def save_config(config):
-    CONFIG_PATH.parent.mkdir(exist_ok=True, parents=True)
-    with open(CONFIG_PATH, 'w') as f:
-        json.dump(config, f)
-
-def get_white_lists():
-    return load_config()
+# Удаляем жестко заданный путь, используем автоматическое определение из config.py
+# CONFIG_PATH = Path('/app/config/config.yaml')
 
 
 def fetch_pools() -> List[Dict]:
@@ -99,11 +77,11 @@ def fetch_pools() -> List[Dict]:
         logger.error(f"Unexpected error while fetching pools: {e}", exc_info=True)
         return []
 
-def save_apy_data(pools: List[Dict]):
+def save_apy_data(pools: List[Dict], config: Dict):
     """Save APY data to Supabase database"""
     try:
         logger.info("Connecting to Supabase...")
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        supabase = create_client(config['supabase']['url'], config['supabase']['key'])
         
         records = {}
         current_time = int(time.time())
@@ -148,13 +126,13 @@ def run_data_collection():
         if not validate_env_vars():
             logger.error("Cannot start data collection: missing required configuration")
             return None
-        white_lists = get_white_lists()
-        logger.info(f"Starting data collector with protocols: {white_lists['protocols']}")
-        logger.info(f"Monitoring tokens: {white_lists['tokens']}")
+        config = load_config()
+        logger.info(f"Starting data collector with protocols: {config['white_list']['protocols']}")
+        logger.info(f"Monitoring tokens: {config['white_list']['tokens']}")
         
         pools = fetch_pools()
         if pools:
-            save_apy_data(pools)
+            save_apy_data(pools, config)
             logger.info("Data collection cycle completed successfully")
         else:
             logger.warning("No pools were fetched, skipping database update")

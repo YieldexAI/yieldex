@@ -9,4 +9,7 @@ services:
       - ./services/data_collector/.env
     volumes:
       - ./logs:/app/logs
-    command: python -m yieldex_data_collector.collector
+    environment:
+      - CONFIG_PATH=/app/data_collector/config.yaml
+      - LOG_DIR=/app/logs
+      - PYTHONUNBUFFERED=1

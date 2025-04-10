@@ -1,0 +1,7 @@
+   supabase:
+     key: ${SUPABASE_KEY}
+     url: ${SUPABASE_URL}
+
+   white_list:
+     protocols: ${WHITE_LIST_PROTOCOLS}
+     tokens: ${WHITE_LIST_TOKENS}
