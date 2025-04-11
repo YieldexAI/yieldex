@@ -12,12 +12,12 @@ from web3.types import TxParams
 
 from yieldex_common.utils import get_token_address
 from yieldex_onchain.protocol_fabric import get_protocol_operator
-from src.analytics.analyzer import (
+from analyzer.analyzer import (
     format_recommendation,
     format_recommendations,
     get_recommendations,
 )
-from src.onchain.protocol_fabric import CollateralType, SiloOperator
+from yieldex_onchain.protocol_fabric import CollateralType, SiloOperator
 
 logger = logging.getLogger(__name__)
 
@@ -197,8 +197,8 @@ def execute_silo_market_transfer(recommendation: dict):
         )
 
         # Import modules from our project
-        from src.onchain.protocol_fabric import CollateralType, SiloOperator
-        from src.onchain.silo_demo import (
+        from yieldex_onchain.protocol_fabric import CollateralType, SiloOperator
+        from yieldex_onchain.silo_demo import (
             display_market_info,
             run_deposit_flow,
             run_withdraw_flow,
@@ -387,8 +387,8 @@ def execute_silo_market_transfer(recommendation: dict):
         time.sleep(5)
 
         # Check wallet balance to ensure funds were withdrawn
-        from src.common.utils import get_token_address
-        from src.onchain.silo_demo import check_wallet_balance
+        from yieldex_common.utils import get_token_address
+        from yieldex_onchain.silo_demo import check_wallet_balance
 
         token_address = get_token_address(asset, chain)
         wallet_balance = check_wallet_balance(source_operator)

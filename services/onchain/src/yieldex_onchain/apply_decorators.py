@@ -6,7 +6,7 @@ import logging
 from inspect import isfunction
 from typing import Type
 
-from src.onchain.protocol_fabric import (
+from yieldex_onchain.protocol_fabric import (
     AaveOperator,
     CompoundOperator,
     LendleOperator,
@@ -14,7 +14,7 @@ from src.onchain.protocol_fabric import (
     CurveOperator,
     UniswapV3Operator,
 )
-from src.onchain.protocol_decorators import (
+from yieldex_onchain.protocol_decorators import (
     track_withdraw,
     track_supply,
     sync_transaction_pool_balances,
@@ -58,7 +58,7 @@ def apply_decorators():
     SiloOperator.deposit = track_supply("silo-v2")(original_silo_deposit)
 
     # Apply to transaction methods
-    from src.onchain.onchain_operator import (
+    from yieldex_onchain.onchain_operator import (
         execute_silo_market_transfer,
         execute_uniswap_flow,
     )

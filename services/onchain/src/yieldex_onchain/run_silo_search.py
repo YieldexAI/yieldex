@@ -4,7 +4,7 @@
 """
 
 import logging
-from src.onchain.protocol_fabric import SiloOperator, find_silos_for_market
+from yieldex_onchain.protocol_fabric import SiloOperator, find_silos_for_market
 
 # Настраиваем логирование
 logging.basicConfig(

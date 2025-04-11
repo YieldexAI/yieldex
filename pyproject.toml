@@ -17,6 +17,7 @@ dev = [
 
 [tool.uv.sources]
 yieldex-common = { workspace = true }
+yieldex-analyzer = { workspace = true }
 
 [tool.uv.workspace]
 members = ["services/*"]            

@@ -9,13 +9,8 @@ from web3 import Web3
 from web3.contract import Contract
 import time
 
-# Добавляем путь к корню проекта для импортов
-current_dir = Path(__file__).parent
-project_root = current_dir.parent.parent
-sys.path.insert(0, str(project_root))
-
-from src.common.utils import get_token_address
-from src.common.config import (
+from yieldex_common.utils import get_token_address
+from yieldex_common.config import (
     PRIVATE_KEY,
     RPC_URLS,
     STABLECOINS,
@@ -29,7 +24,7 @@ from src.common.config import (
     FLUID_ADDRESSES,
 )
 
-from src.analytics.analyzer import get_recommendations, format_recommendations
+from analyzer.analyzer import get_recommendations, format_recommendations
 
 # Configure logging
 logging.basicConfig(
@@ -37,7 +32,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-ABI_DIR = Path(__file__).parent.parent / "common" / "abi"
+# Обновляем путь к ABI файлам - берем из пакета yieldex_common
+from yieldex_common import config
+# Используем ABI из модуля yieldex_common
+ABI_DIR = Path(os.path.dirname(config.__file__)) / "abi"
+if not os.path.exists(ABI_DIR):
+    logger.error(f"ABI директория не найдена: {ABI_DIR}")
+    raise FileNotFoundError(f"ABI директория не найдена: {ABI_DIR}")
+else:
+    logger.info(f"Найдена ABI директория: {ABI_DIR}")
+
+# Добавляем переменную для протоколов без getReserveData
+no_reserve_data_protocols = ['silo-v2', 'yieldex-oracle', 'uniswap-v3', 'rho-markets', 'compound-v3', 'fluid']
+
 
 
 class BaseProtocolOperator:
