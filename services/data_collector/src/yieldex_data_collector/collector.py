@@ -136,7 +136,7 @@ def run_data_collection():
             logger.info("Data collection cycle completed successfully")
         else:
             logger.warning("No pools were fetched, skipping database update")
-        return pools
+        return len(pools)  
     except Exception as e:
         logger.critical(f"Data collection failed: {str(e)}", exc_info=True)
         return None

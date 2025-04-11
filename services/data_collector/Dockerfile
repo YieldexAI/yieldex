@@ -24,7 +24,7 @@ COPY services/data_collector ./data_collector
 COPY services/data_collector/config.yaml ./data_collector/config.yaml
 
 # Create virtual environment and install dependencies
-RUN uv venv && cd data_collector && uv pip install -e .
+RUN uv venv && uv sync --no-install-project
 
 # Update PATH to use virtual environment (.venv)
 ENV PATH="/app/.venv/bin:$PATH"

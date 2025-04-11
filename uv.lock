@@ -4,10 +4,10 @@ requires-python = ">=3.11"
 
 [manifest]
 members = [
-    "yieldex",
     "yieldex-analyzer",
     "yieldex-common",
     "yieldex-data-collector",
+    "yieldex-monorepo-meta",
     "yieldex-onchain",
     "yieldex-optimizer",
     "yieldex-pool-link-updater",
@@ -1672,30 +1672,6 @@ wheels = [
 ]
 
 [[package]]
-name = "yieldex"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "yieldex-data-collector" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "hatchling" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "hatchling", marker = "extra == 'dev'", specifier = ">=1.24" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.0.272" },
-    { name = "yieldex-data-collector", editable = "services/data_collector" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "yieldex-analyzer"
 version = "0.1.0"
 source = { editable = "services/analyzer" }
@@ -1800,6 +1776,26 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "supabase", specifier = ">=2.0.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "yieldex-monorepo-meta"
+version = "0.1.0"
+source = { virtual = "." }
+
+[package.optional-dependencies]
+dev = [
+    { name = "hatchling" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "hatchling", marker = "extra == 'dev'", specifier = ">=1.24" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.0.272" },
 ]
 provides-extras = ["dev"]
 

@@ -1,38 +1,22 @@
 [project]
-name = "yieldex"
+name = "yieldex-monorepo-meta"
 version = "0.1.0"
-description = "Monorepo for multiple Python microservices"
-requires-python = ">=3.11"
-dependencies = [
-    # "yieldex-analyzer",                      # объявляем сервисы как зависимости
-    # "yieldex-optimizer",
-    # "yieldex-common",
-    "yieldex-data-collector",
-    # "yieldex-pool-link-updater",
-    # "hatchling>=1.24",
-]
+description = "Monorepo for Yieldex Python microservices"
 
-# Группы зависимостей (например, для разработки/тестов)
+requires-python = ">=3.11"
+
+[tool.uv]
+package = false 
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4",
     "ruff>=0.0.272",
     "hatchling>=1.24"
-    # ... другие утилиты для разработки
 ]
 
 [tool.uv.sources]
-# yieldex-analyzer = { workspace = true }
-# yieldex-optimizer = { workspace = true }
 yieldex-common = { workspace = true }
-yieldex-data-collector = { workspace = true }
-# yieldex-pool-link-updater = { workspace = true }
+
 [tool.uv.workspace]
-members = ["services/*"]            # все пакеты в каталоге services являются членами workspace
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = []
+members = ["services/*"]            
