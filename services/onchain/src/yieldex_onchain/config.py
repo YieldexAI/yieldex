@@ -9,6 +9,7 @@ def validate_env_vars() -> bool:
         return False
     return True
 
+
 def validate_rpc_connection():
     """Validate RPC connections"""
     for chain, url in RPC_URLS.items():
@@ -19,4 +20,4 @@ def validate_rpc_connection():
             else:
                 logger.info(f"Successfully connected to {chain}")
         except Exception as e:
-            logger.error(f"Error connecting to {chain} RPC: {str(e)}") 
+            logger.error(f"Error connecting to {chain} RPC: {str(e)}")

@@ -1,1 +1,1 @@
-"""Tests for yield_optimizer package.""" 
+"""Tests for yield_optimizer package."""

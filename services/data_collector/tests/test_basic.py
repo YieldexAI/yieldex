@@ -9,6 +9,7 @@ class TestDataCollector(unittest.TestCase):
     def test_import(self):
         """Test that the package can be imported."""
         import yieldex_data_collector
+
         self.assertIsNotNone(yieldex_data_collector.__version__)
 
 

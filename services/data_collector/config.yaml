@@ -1,7 +1,7 @@
-   supabase:
-     key: ${SUPABASE_KEY}
-     url: ${SUPABASE_URL}
+supabase:
+  key: ${SUPABASE_KEY}
+  url: ${SUPABASE_URL}
 
-   white_list:
-     protocols: aave-v3,aave-v2,lendle,venus-core-pool,rho-markets,compound-v3,silo-v2,beefy
-     tokens: USDT,USDC,DAI,GHO,AUSD,TUSD,USD₮0,FRAX,LUSD,USDCE,USDC.E,SCUSD
+white_list:
+  protocols: aave-v3,aave-v2,lendle,venus-core-pool,rho-markets,compound-v3,silo-v2,beefy
+  tokens: USDT,USDC,DAI,GHO,AUSD,TUSD,USD₮0,FRAX,LUSD,USDCE,USDC.E,SCUSD

@@ -9,6 +9,7 @@ class TestOnchain(unittest.TestCase):
     def test_import(self):
         """Test that the package can be imported."""
         import yieldex_onchain
+
         self.assertIsNotNone(yieldex_onchain.__version__)
 
 

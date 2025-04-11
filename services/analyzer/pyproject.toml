@@ -17,6 +17,7 @@ dependencies = [
     "eth-typing>=5.1.0",
     "eth-utils>=5.2.0",
     "pyyaml>=6.0",
+    "supabase>=2.0.0",
 ]
 
 [project.optional-dependencies]
@@ -38,3 +39,6 @@ yieldex-analyzer = { workspace = true }
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[project.scripts]
+analyzer = "yieldex_analyzer.analyzer:analyze_opportunities"

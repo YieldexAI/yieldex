@@ -1680,6 +1680,7 @@ dependencies = [
     { name = "eth-typing" },
     { name = "eth-utils" },
     { name = "pyyaml" },
+    { name = "supabase" },
     { name = "web3" },
     { name = "yieldex-common" },
 ]
@@ -1708,6 +1709,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.0.270" },
+    { name = "supabase", specifier = ">=2.0.0" },
     { name = "web3", specifier = ">=7.0.0" },
     { name = "yieldex-common", editable = "services/common" },
 ]
@@ -1720,6 +1722,8 @@ source = { editable = "services/common" }
 dependencies = [
     { name = "python-dotenv" },
     { name = "pyyaml" },
+    { name = "supabase" },
+    { name = "web3" },
 ]
 
 [package.optional-dependencies]
@@ -1738,6 +1742,8 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "supabase", specifier = ">=2.0.0" },
+    { name = "web3", specifier = ">=6.0.0" },
 ]
 provides-extras = ["dev"]
 

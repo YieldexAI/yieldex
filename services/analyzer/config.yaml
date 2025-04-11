@@ -1,0 +1,3 @@
+supabase:
+  key: ${SUPABASE_KEY}
+  url: ${SUPABASE_URL}

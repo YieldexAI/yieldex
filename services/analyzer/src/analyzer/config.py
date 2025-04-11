@@ -22,7 +22,7 @@ def load_config(file_path=None):
         # List of possible config.yaml file locations
         possible_paths = [
             "config.yaml",  # In current directory
-            "/app/data_collector/config.yaml",  # In new Docker directory structure
+            "/app/analyzer/config.yaml",  # In new Docker directory structure
             "/app/config.yaml",  # In /app root in Docker
             os.path.join(os.getcwd(), "config.yaml"),  # From current working directory
         ]
@@ -36,9 +36,9 @@ def load_config(file_path=None):
 
         # Add paths for backward compatibility with old structure
         possible_paths.append(
-            os.path.join(service_dir, "services/data_collector/config.yaml")
+            os.path.join(service_dir, "services/analyzer/config.yaml")
         )
-        possible_paths.append("/app/services/data_collector/config.yaml")
+        possible_paths.append("/app/services/analyzer/config.yaml")
 
         # Check CONFIG_PATH environment variable
         if os.getenv("CONFIG_PATH"):
@@ -135,34 +135,4 @@ def validate_env_vars() -> bool:
         logger.error("Missing Supabase configuration (key or url)")
         return False
 
-    # Validate white list configuration
-    if (
-        "white_list" not in config
-        or not config["white_list"].get("protocols")
-        or not config["white_list"].get("tokens")
-    ):
-        logger.error("Missing white list configuration (protocols or tokens)")
-        return False
-
     return True
-
-
-def get_white_lists():
-    """
-    Get white lists for protocols and tokens from configuration.
-
-    Returns:
-        dict: Dictionary with 'protocols' and 'tokens' lists
-    """
-    config_path = os.getenv("CONFIG_PATH")
-    config = load_config(config_path)
-
-    white_lists = {"protocols": [], "tokens": []}
-
-    if config and "white_list" in config:
-        if "protocols" in config["white_list"]:
-            white_lists["protocols"] = config["white_list"]["protocols"].split(",")
-        if "tokens" in config["white_list"]:
-            white_lists["tokens"] = config["white_list"]["tokens"].split(",")
-
-    return white_lists
