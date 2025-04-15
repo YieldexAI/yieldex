@@ -18,6 +18,10 @@ dependencies = [
     "eth-utils>=5.2.0",
     "pyyaml>=6.0",
     "supabase>=2.0.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.23.2",
+    "pydantic>=2.4.2",
+    "requests>=2.31.0",
 ]
 
 [project.optional-dependencies]
@@ -42,3 +46,4 @@ allow-direct-references = true
 
 [project.scripts]
 analyzer = "yieldex_analyzer.analyzer:analyze_opportunities"
+api = "yieldex_analyzer.api:start_api_server"

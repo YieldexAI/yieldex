@@ -1,3 +1,10 @@
+# Supabase
 supabase:
   key: ${SUPABASE_KEY}
   url: ${SUPABASE_URL}
+
+# API Token for authentication
+API_TOKEN: ${API_TOKEN}
+
+# Alchemy API Key
+ALCHEMY_API_KEY: ${ALCHEMY_API_KEY}
