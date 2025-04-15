@@ -225,17 +225,26 @@ class BaseProtocolOperator:
             signed_tx = self.w3.eth.account.sign_transaction(
                 tx, private_key=self.account.key
             )
-            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+            tx_hash_hex = tx_hash.hex()
 
+            # Add explorer URL if available
+            if self.explorer_url:
+                tx_url = f"{self.explorer_url}/tx/{tx_hash_hex}"
+                logger.info(f"Transaction sent: {tx_url}")
+            else:
+                logger.info(f"Transaction sent, hash: {tx_hash_hex}")
+                
             # Wait for transaction receipt
-            logger.info(f"Transaction sent, waiting for confirmation: {tx_hash.hex()}")
             receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=180)
 
             if receipt["status"] == 1:
-                logger.info(f"Transaction successful: {tx_hash.hex()}")
-                return tx_hash.hex()
+                logger.info(f"Transaction successful: {tx_hash_hex}")
+                if self.explorer_url:
+                    logger.info(f"Transaction URL: {self.explorer_url}/tx/0x{tx_hash_hex}")
+                return tx_hash_hex
             else:
-                logger.error(f"Transaction failed: {tx_hash.hex()}")
+                logger.error(f"Transaction failed: {tx_hash_hex}")
                 logger.error(f"Receipt: {receipt}")
                 return None
 
@@ -268,6 +277,130 @@ class BaseProtocolOperator:
                     "Make sure you're not sending ETH value with your transaction to the ERC4626 vault."
                 )
 
+            return None
+
+    def _send_transaction_eip1559(self, tx_function) -> str:
+        """
+        Enhanced implementation for sending transactions with EIP-1559 support
+        
+        Args:
+            tx_function: Web3.py contract function to call
+            
+        Returns:
+            Transaction hash if successful, None otherwise
+        """
+        try:
+            logger.info("Preparing transaction with EIP-1559 format...")
+            
+            # Получаем текущий nonce (включая pending транзакции)
+            nonce = self.w3.eth.get_transaction_count(self.account.address, "pending")
+            
+            # Получаем информацию о последнем блоке для расчета газа
+            latest_block = self.w3.eth.get_block('latest')
+            base_fee = latest_block.get('baseFeePerGas', 0)
+            
+            # Устанавливаем priority fee (чаевые майнерам)
+            priority_fee = self.w3.eth.max_priority_fee
+            
+            # Максимальная комиссия = базовая комиссия * 2 + приоритетная комиссия
+            # Умножаем базовую комиссию на 2 для запаса
+            max_fee = base_fee * 2 + priority_fee
+            
+            logger.info(f"Gas parameters: baseFee={base_fee}, priorityFee={priority_fee}, maxFee={max_fee}")
+            
+            # Пытаемся оценить газ для транзакции
+            try:
+                # Add more detailed transaction parameters for gas estimation to reduce failures
+                estimated_gas = tx_function.estimate_gas({
+                    'from': self.account.address,
+                    'nonce': nonce,
+                    'maxFeePerGas': max_fee,
+                    'maxPriorityFeePerGas': priority_fee
+                })
+                # Добавляем 10% к оценке газа для запаса
+                gas_limit = int(estimated_gas * 1.1)
+                logger.info(f"Estimated gas: {estimated_gas}, using limit: {gas_limit}")
+            except Exception as e:
+                logger.warning(f"Gas estimation failed: {e}")
+                
+                # Check if this is an approve function (common cause of gas estimation failures)
+                function_signature = tx_function.function_identifier if hasattr(tx_function, 'function_identifier') else str(tx_function)
+                if 'approve' in function_signature.lower():
+                    logger.info("This is an approve transaction, using a higher gas limit for safety")
+                    gas_limit = 100000  # Higher limit specifically for approvals, which are typically around 50,000
+                else:
+                    # Если оценка газа не удалась, используем фиксированное значение
+                    gas_limit = 300000
+                
+                logger.info(f"Using default gas limit: {gas_limit}")
+            
+            # Строим транзакцию
+            transaction = tx_function.build_transaction({
+                'from': self.account.address,
+                'nonce': nonce,
+                'gas': gas_limit,
+                # Используем EIP-1559 параметры газа
+                'maxFeePerGas': max_fee,
+                'maxPriorityFeePerGas': priority_fee,
+                'chainId': int(self.w3.eth.chain_id)
+            })
+            
+            # Подписываем транзакцию
+            signed_tx = self.account.sign_transaction(transaction)
+            
+            # Отправляем транзакцию
+            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+            tx_hash_hex = tx_hash.hex()
+            
+            # Добавляем ссылку на Explorer
+            if self.explorer_url:
+                tx_url = f"{self.explorer_url}/tx/{tx_hash_hex}"
+                logger.info(f"Transaction sent: {tx_url}")
+            else:
+                logger.info(f"Transaction sent, hash: {tx_hash_hex}")
+            
+            # More robust transaction confirmation
+            try:
+                # Ожидаем завершения транзакции с таймаутом
+                logger.info(f"Waiting for transaction confirmation...")
+                receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=180)  # Increased timeout
+                
+                if receipt.status == 1:
+                    logger.info(f"Transaction successful, used gas: {receipt.gasUsed}")
+                    
+                    # For Arbitrum, which has frequent reorgs, double-check transaction success
+                    if self.network == "Arbitrum":
+                        time.sleep(5)  # Additional wait for Arbitrum
+                        confirm_receipt = self.w3.eth.get_transaction_receipt(tx_hash)
+                        if confirm_receipt.status != 1:
+                            logger.error("Transaction was reorged or failed on second check")
+                            return None
+                    
+                    return tx_hash_hex
+                else:
+                    logger.error(f"Transaction failed, receipt status: {receipt.status}")
+                    return None
+            except Exception as wait_error:
+                logger.error(f"Error waiting for transaction confirmation: {wait_error}")
+                
+                # Try to check transaction status one more time
+                try:
+                    time.sleep(30)  # Wait a bit longer
+                    final_receipt = self.w3.eth.get_transaction_receipt(tx_hash)
+                    if final_receipt and final_receipt.status == 1:
+                        logger.info("Transaction succeeded after timeout")
+                        return tx_hash_hex
+                    else:
+                        logger.error("Transaction failed or status unknown after timeout")
+                        return None
+                except Exception:
+                    logger.error("Could not determine final transaction status")
+                    return None
+            
+        except Exception as e:
+            logger.error(f"Error sending transaction: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return None
 
     def _call_contract(self, function) -> Any:
@@ -2541,119 +2674,86 @@ class CompoundOperator(BaseProtocolOperator):
 
 
 class FluidOperator(BaseProtocolOperator):
-    """Class for working with Fluid Finance lending protocol through Instadapp DSA"""
+    """Class for working with Fluid Finance lending protocol using direct contract interaction"""
 
-    def __init__(self, network: str, protocol: str = "fluid"):
+    def _custom_send_transaction(self, tx_function):
         """
-        Initialize Fluid operator
-
+        Custom implementation to send transaction to avoid issues with raw transactions
+        
         Args:
-            network: Network name (e.g. 'Arbitrum')
-            protocol: Protocol name (default: 'fluid')
+            tx_function: Transaction function to execute
+            
+        Returns:
+            Transaction hash if successful, None otherwise
         """
-        # Сохраняем параметры
-        self.network = network
-        self.protocol = protocol
-
-        # Инициализируем web3 и аккаунт
-        self.w3 = Web3(Web3.HTTPProvider(RPC_URLS[network]))
-        self.account = self.w3.eth.account.from_key(PRIVATE_KEY)
-
-        # Протокол определен при инициализации, но токен выбирается в момент операции
-        # Контрольный адрес только для инициализации базового класса
-        self.contract_address = FLUID_ADDRESSES[network]["USDC"]  # Default address
-        self.contract = None  # Initialize later when needed
-
-        # Глобальный список протоколов без метода getReserveData
-        global no_reserve_data_protocols
-        if "no_reserve_data_protocols" not in globals():
-            no_reserve_data_protocols = [
-                "yieldex-oracle",
-                "silo-v2",
-                "uniswap-v3",
-                "curve",
-                "fluid",
-            ]
-        if "fluid" not in no_reserve_data_protocols:
-            no_reserve_data_protocols.append("fluid")
-
-        # Определяем список поддерживаемых токенов
-        self.supported_tokens = list(FLUID_ADDRESSES[network].keys())
-        logger.info(f"Available tokens: {self.supported_tokens}")
-
-        # Инициализируем базовый класс
-        super().__init__(network, protocol)
-
-        # Инициализируем DSA компоненты
         try:
-            from .dsa.dsa_manager import DSAManager
-            from .dsa.dsa_connector import DSAConnector
-
-            # Передаем self как базовый оператор
-            self.dsa_manager = DSAManager(self, network)
-            self.dsa_connector = DSAConnector(self.dsa_manager)
-
-            logger.info("DSA components initialized for Fluid operator")
-        except ImportError as e:
-            logger.error(f"Failed to import DSA modules: {e}")
-            logger.error("DSA functionality will not be available")
-            self.dsa_manager = None
-            self.dsa_connector = None
+            # Используем новый метод для отправки EIP-1559 транзакций
+            logger.info("Using EIP-1559 transaction format for Fluid")
+            return self._send_transaction_eip1559(tx_function)
+            
         except Exception as e:
-            logger.error(f"Failed to initialize DSA components: {e}")
+            logger.error(f"Error sending custom transaction: {e}")
             import traceback
-
             logger.error(traceback.format_exc())
-            self.dsa_manager = None
-            self.dsa_connector = None
-
-    def _get_token_contract(self, token: str):
+            return None
+            
+    def _print_contract_info(self, contract):
         """
-        Get token contract
-
+        Print detailed information about a contract for debugging purposes
+        
         Args:
-            token: Token symbol (e.g. 'USDC')
-
-        Returns:
-            Token contract
+            contract: Web3 contract instance
         """
-        if token not in self.supported_tokens:
-            raise ValueError(f"Unsupported token {token} for Fluid on {self.network}")
-
-        token_address = self.get_token_address(token)
-
-        # Загружаем ABI для ERC20 токена
-        with open(os.path.join(ABI_DIR, "ERC20.json")) as f:
-            token_abi = json.load(f)
-
-        return self.w3.eth.contract(address=token_address, abi=token_abi)
-
-    def _get_vault_contract(self, token: str):
-        """
-        Get Fluid vault contract for specific token
-
-        Args:
-            token: Token symbol (e.g. 'USDC')
-
-        Returns:
-            Vault contract
-        """
-        if token not in self.supported_tokens:
-            raise ValueError(f"Unsupported token {token} for Fluid on {self.network}")
-
-        # Получаем адрес хранилища для токена
-        vault_address = FLUID_ADDRESSES[self.network][token]
-        logger.info(f"Getting Fluid vault contract for {token}")
-
-        # Загружаем ABI для Fluid Lending Pool
-        with open(os.path.join(ABI_DIR, "FluidLendingPool.json")) as f:
-            vault_abi = json.load(f)
-
-        return self.w3.eth.contract(address=vault_address, abi=vault_abi)
+        logger.info(f"Contract address: {contract.address}")
+        
+        # Get a list of all available functions
+        functions = []
+        for attr in dir(contract.functions):
+            if not attr.startswith('_'):
+                functions.append(attr)
+        
+        logger.info(f"Available functions ({len(functions)}):")
+        for func in functions:
+            logger.info(f"  - {func}")
+            
+        # Try to identify if this is an ERC4626 vault
+        erc4626_functions = [
+            'asset', 'totalAssets', 'convertToShares', 'convertToAssets', 
+            'maxDeposit', 'previewDeposit', 'deposit', 'maxMint', 
+            'previewMint', 'mint', 'maxWithdraw', 'previewWithdraw', 
+            'withdraw', 'maxRedeem', 'previewRedeem', 'redeem'
+        ]
+        
+        erc4626_count = 0
+        for func in erc4626_functions:
+            if func in functions:
+                erc4626_count += 1
+                
+        erc4626_match = erc4626_count / len(erc4626_functions)
+        logger.info(f"ERC4626 compatibility: {erc4626_count}/{len(erc4626_functions)} functions ({erc4626_match:.0%})")
+        
+        # Try to find the correct deposit function signature
+        deposit_functions = [f for f in functions if 'deposit' in f.lower()]
+        logger.info(f"Deposit-related functions: {deposit_functions}")
+        
+        # Check ABI for deposit function details
+        deposit_abis = []
+        for item in contract.abi:
+            if item.get('type') == 'function' and item.get('name') == 'deposit':
+                deposit_abis.append(item)
+                
+        if deposit_abis:
+            logger.info("Deposit function ABI details:")
+            for i, abi in enumerate(deposit_abis):
+                logger.info(f"  Deposit variant {i+1}:")
+                logger.info(f"    Inputs: {json.dumps(abi.get('inputs', []))}")
+                logger.info(f"    Outputs: {json.dumps(abi.get('outputs', []))}")
+        else:
+            logger.info("No deposit function found in ABI")
 
     def get_balance(self, token: str) -> float:
         """
-        Get current balance of token in Fluid
+        Get current balance of fToken (e.g. fUSDC)
 
         Args:
             token: Token symbol (e.g. 'USDC')
@@ -2662,66 +2762,146 @@ class FluidOperator(BaseProtocolOperator):
             Balance as float
         """
         try:
-            # Check if DSA is available
-            if not self.dsa_manager or not self.dsa_connector:
-                logger.warning(
-                    "DSA not initialized, falling back to direct vault check"
-                )
-                return self._get_direct_balance(token)
+            # Получаем контракт vault токена (fToken)
+            vault_token_contract = self.contract if token.upper() == "USDC" else self._load_contract()
 
-            # Get DSA accounts
-            accounts = self.dsa_manager.get_dsa_accounts()
-            if not accounts:
-                logger.info("No DSA accounts found")
-                return 0.0
+            # Получаем баланс пользователя (количество fToken)
+            balance_wei = vault_token_contract.functions.balanceOf(self.account.address).call()
 
-            dsa_address = accounts[0]["address"]
+            # Получаем количество десятичных знаков для fToken
+            decimals = vault_token_contract.functions.decimals().call()
 
-            # Get vault contract
-            vault_contract = self._get_vault_contract(token)
-
-            # Get DSA balance in vault
-            balance_wei = vault_contract.functions.balanceOf(dsa_address).call()
-
-            # Get decimals
-            decimals = vault_contract.functions.decimals().call()
-
-            # Convert to human-readable format
+            # Конвертируем в человеко-читаемый формат
             balance = balance_wei / 10**decimals
 
-            logger.info(f"DSA balance in Fluid for {token}: {balance}")
+            logger.info(f"Balance of f{token} tokens: {balance}")
             return balance
 
         except Exception as e:
-            logger.error(f"Error getting balance: {e}")
+            logger.error(f"Error getting Fluid balance for {token}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return 0.0
 
-    def _get_direct_balance(self, token: str) -> float:
+    def test_approval(self, token: str, amount: float) -> bool:
         """
-        Get direct balance from Fluid vault (fallback method)
-
+        Test token approval for Fluid vault separately
+        
         Args:
             token: Token symbol (e.g. 'USDC')
-
+            amount: Amount to approve
+            
         Returns:
-            Balance as float
+            True if approval successful, False otherwise
         """
-        vault_contract = self._get_vault_contract(token)
-
-        # Получаем баланс пользователя в хранилище
-        balance_wei = vault_contract.functions.balanceOf(self.account.address).call()
-
-        # Получаем количество десятичных знаков для токена
-        decimals = vault_contract.functions.decimals().call()
-
-        # Конвертируем в человеко-читаемый формат
-        balance = balance_wei / 10**decimals
-
-        return balance
+        try:
+            # Get token address and contract
+            token_address = get_token_address(token, self.network)
+            token_contract = self.w3.eth.contract(address=token_address, abi=json.load(open(ABI_DIR / "ERC20.json")))
+            
+            # Get vault contract
+            vault_contract = self.contract if token.upper() == "USDC" else self._load_contract()
+            
+            # Log addresses
+            logger.info("=== APPROVAL TEST ===")
+            logger.info(f"Token address: {token_address}")
+            logger.info(f"Vault address: {vault_contract.address}")
+            logger.info(f"User address: {self.account.address}")
+            
+            # Check decimals and convert amount
+            decimals = token_contract.functions.decimals().call()
+            amount_wei = int(amount * 10**decimals)
+            logger.info(f"Amount to approve: {amount} {token} ({amount_wei} wei)")
+            
+            # Check current allowance
+            current_allowance = token_contract.functions.allowance(
+                self.account.address, vault_contract.address
+            ).call()
+            logger.info(f"Current allowance: {current_allowance / 10**decimals} {token}")
+            
+            # Check if approval is needed
+            if current_allowance >= amount_wei:
+                logger.info("Current allowance is already sufficient")
+                return True
+                
+            # Create approval transaction
+            approve_amount = amount_wei * 2  # Approve double the amount
+            logger.info(f"Creating approval for {approve_amount} wei ({approve_amount / 10**decimals} {token})")
+            
+            # Create the approval function
+            approve_function = token_contract.functions.approve(vault_contract.address, approve_amount)
+            
+            # Execute transaction with lower gas limit specifically for approval
+            try:
+                # Estimate gas
+                gas_estimate = approve_function.estimate_gas({'from': self.account.address})
+                logger.info(f"Estimated gas for approval: {gas_estimate}")
+                gas_limit = int(gas_estimate * 1.5)  # 50% buffer
+            except Exception as e:
+                logger.warning(f"Gas estimation failed for approval: {e}")
+                gas_limit = 70000  # Standard ERC20 approve is around 45k-60k gas
+                
+            logger.info(f"Using gas limit of {gas_limit} for approval")
+            
+            # Get nonce
+            nonce = self.w3.eth.get_transaction_count(self.account.address, "pending")
+            
+            # Get gas parameters
+            latest_block = self.w3.eth.get_block('latest')
+            base_fee = latest_block.get('baseFeePerGas', 0)
+            priority_fee = self.w3.eth.max_priority_fee
+            max_fee = base_fee * 2 + priority_fee
+            
+            # Build transaction
+            tx_data = approve_function.build_transaction({
+                'from': self.account.address,
+                'nonce': nonce,
+                'gas': gas_limit,
+                'maxFeePerGas': max_fee,
+                'maxPriorityFeePerGas': priority_fee,
+                'chainId': int(self.w3.eth.chain_id)
+            })
+            
+            # Sign and send
+            signed_tx = self.account.sign_transaction(tx_data)
+            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+            tx_hash_hex = tx_hash.hex()
+            
+            logger.info(f"Approval transaction sent: {tx_hash_hex}")
+            
+            # Wait for confirmation
+            receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=180)
+            
+            if receipt.status == 1:
+                logger.info(f"Approval transaction succeeded, gas used: {receipt.gasUsed}")
+                
+                # Verify new allowance
+                time.sleep(10)  # Wait for blockchain state to update
+                new_allowance = token_contract.functions.allowance(
+                    self.account.address, vault_contract.address
+                ).call()
+                
+                logger.info(f"New allowance: {new_allowance / 10**decimals} {token}")
+                
+                if new_allowance >= amount_wei:
+                    logger.info("Approval successful!")
+                    return True
+                else:
+                    logger.error("Approval transaction succeeded but allowance did not increase")
+                    return False
+            else:
+                logger.error(f"Approval transaction failed, status: {receipt.status}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error during approval test: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return False
 
     def supply(self, token: str, amount: float) -> str:
         """
-        Supply tokens to Fluid using DSA
+        Supply tokens to Fluid protocol using deposit method
 
         Args:
             token: Token symbol (e.g. 'USDC')
@@ -2731,134 +2911,319 @@ class FluidOperator(BaseProtocolOperator):
             Transaction hash if successful, None otherwise
         """
         try:
-            # Check if DSA is available
-            if not self.dsa_manager or not self.dsa_connector:
-                logger.error("DSA not initialized, cannot proceed with supply")
-                logger.error("Fluid protocol requires DSA for interaction")
-                return None
-
-            # Get token address
-            token_address = self.get_token_address(token)
-
-            # Get token contract
-            token_contract = self._get_token_contract(token)
-
-            # Get decimals
+            # Получаем адрес токена
+            token_address = get_token_address(token, self.network)
+            
+            # Получаем контракт токена
+            token_contract = self.w3.eth.contract(address=token_address, abi=json.load(open(ABI_DIR / "ERC20.json")))
+            
+            # Получаем контракт vault
+            token_vault_contract = self.contract if token.upper() == "USDC" else self._load_contract()
+            
+            # Print detailed contract information for debugging
+            logger.info(f"Analyzing ERC4626 vault contract for {token}...")
+            self._print_contract_info(token_vault_contract)
+            
+            # Log contract addresses for debugging
+            logger.info(f"Token address: {token_address}")
+            logger.info(f"Vault contract address: {token_vault_contract.address}")
+            
+            # Получаем количество десятичных знаков для токена
             decimals = token_contract.functions.decimals().call()
-
-            # Check user balance
-            user_balance_wei = token_contract.functions.balanceOf(
-                self.account.address
-            ).call()
-            user_balance = user_balance_wei / 10**decimals
-
-            if user_balance < amount:
-                logger.error(
-                    f"Insufficient {token} balance: {user_balance}, needed: {amount}"
-                )
+            
+            # Конвертируем сумму в wei
+            amount_wei = int(amount * 10**decimals)
+            logger.info(f"Amount in Wei: {amount_wei} (Decimals: {decimals})")
+            
+            # Проверяем баланс пользователя
+            user_balance = token_contract.functions.balanceOf(self.account.address).call()
+            logger.info(f"User balance: {user_balance / 10**decimals} {token} ({user_balance} wei)")
+            
+            if user_balance < amount_wei:
+                logger.error(f"Insufficient {token} balance: {user_balance / 10**decimals}, needed: {amount}")
                 return None
 
-            # Convert amount to wei
-            amount_wei = int(amount * 10**decimals)
-
-            # Deposit to Fluid through DSA
-            tx_hash = self.dsa_connector.deposit_to_fluid(token_address, amount_wei)
-
-            if tx_hash:
-                logger.info(f"Deposit to Fluid successful: {tx_hash}")
-                return tx_hash
-            else:
-                logger.error("Deposit to Fluid failed")
+            # Проверяем, есть ли уже достаточный allowance для основного контракта
+            allowance = token_contract.functions.allowance(
+                self.account.address, token_vault_contract.address
+            ).call()
+            logger.info(f"Current allowance: {allowance / 10**decimals} {token} ({allowance} wei)")
+            
+            # Если allowance недостаточно, выполняем approve SEPARATELY
+            if allowance < amount_wei:
+                try:
+                    logger.info(f"Insufficient allowance. Approving {amount_wei} of {token} for Fluid contract")
+                    
+                    # Create the approve transaction with a more reliable implementation
+                    approve_amount = amount_wei * 2  # Double the amount needed
+                    approve_function = token_contract.functions.approve(token_vault_contract.address, approve_amount)
+                    
+                    # Try to estimate gas for approval
+                    try:
+                        gas_estimate = approve_function.estimate_gas({'from': self.account.address})
+                        logger.info(f"Estimated gas for approval: {gas_estimate}")
+                        gas_limit = int(gas_estimate * 1.5)  # 50% buffer
+                    except Exception as e:
+                        logger.warning(f"Gas estimation failed for approval: {e}")
+                        gas_limit = 70000  # Standard ERC20 approve uses ~45k-60k gas
+                    
+                    logger.info(f"Using gas limit of {gas_limit} for approval")
+                    
+                    # Get current nonce
+                    nonce = self.w3.eth.get_transaction_count(self.account.address, "pending")
+                    
+                    # Get gas parameters
+                    latest_block = self.w3.eth.get_block('latest')
+                    base_fee = latest_block.get('baseFeePerGas', 0)
+                    priority_fee = self.w3.eth.max_priority_fee
+                    max_fee = base_fee * 2 + priority_fee
+                    
+                    # Build transaction
+                    approval_tx = approve_function.build_transaction({
+                        'from': self.account.address,
+                        'nonce': nonce,
+                        'gas': gas_limit,
+                        'maxFeePerGas': max_fee,
+                        'maxPriorityFeePerGas': priority_fee,
+                        'chainId': int(self.w3.eth.chain_id)
+                    })
+                    
+                    # Sign and send
+                    signed_tx = self.account.sign_transaction(approval_tx)
+                    tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+                    approve_hash = tx_hash.hex()
+                    
+                    logger.info(f"Approval transaction sent: {approve_hash}")
+                    logger.info("Waiting for approval transaction confirmation...")
+                    
+                    # Wait for confirmation
+                    receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=180)
+                    
+                    if receipt.status == 1:
+                        logger.info(f"Approval transaction successful, used gas: {receipt.gasUsed}")
+                    else:
+                        logger.error(f"Approval transaction failed, receipt status: {receipt.status}")
+                        return None
+                        
+                    # Add a wait to ensure the approval is confirmed
+                    logger.info("Waiting for approval to be confirmed...")
+                    time.sleep(15)
+                    
+                    # Verify new allowance
+                    new_allowance = token_contract.functions.allowance(
+                        self.account.address, token_vault_contract.address
+                    ).call()
+                    
+                    logger.info(f"New allowance after approval: {new_allowance / 10**decimals} {token} ({new_allowance} wei)")
+                    
+                    if new_allowance < amount_wei:
+                        logger.error("Approval transaction did not increase allowance sufficiently")
+                        return None
+                except Exception as e:
+                    logger.error(f"Error during approval process: {e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+                    return None
+            
+            # Once approval is confirmed, proceed with deposit
+            logger.info(f"Depositing {amount} {token} to Fluid")
+            
+            try:
+                # Get contract interface directly
+                logger.info(f"Using verified deposit function: deposit(uint256 assets, address receiver)")
+                
+                # Try to call the function first to check for errors
+                try:
+                    deposit_func = token_vault_contract.functions.deposit(amount_wei, self.account.address)
+                    # Test if this would work using call() first
+                    logger.info("Checking if deposit would succeed...")
+                    result = deposit_func.call({'from': self.account.address})
+                    logger.info(f"Deposit call successful, would return: {result}")
+                except Exception as e:
+                    error_str = str(e)
+                    logger.error(f"Deposit call check failed: {error_str}")
+                    
+                    # Try to extract more useful error information
+                    if "execution reverted" in error_str:
+                        try:
+                            revert_reason = error_str.split('message":"')[1].split('"')[0]
+                            logger.error(f"Revert reason: {revert_reason}")
+                        except:
+                            logger.error("Could not extract revert reason")
+                            
+                    logger.info("Checking vault requirements...")
+                    
+                    # Check deposit limits
+                    try:
+                        # Check max deposit
+                        if hasattr(token_vault_contract.functions, 'maxDeposit'):
+                            max_deposit = token_vault_contract.functions.maxDeposit(self.account.address).call()
+                            logger.info(f"Maximum deposit allowed: {max_deposit} (attempting {amount_wei})")
+                            if amount_wei > max_deposit:
+                                logger.error(f"Deposit amount exceeds maximum allowed ({amount_wei} > {max_deposit})")
+                                return None
+                    except Exception as limit_error:
+                        logger.warning(f"Could not check max deposit: {limit_error}")
+                        
+                    # Try a smaller amount as a fallback
+                    try:
+                        test_amount = amount_wei // 10  # 10% of original amount
+                        logger.info(f"Trying with a smaller test amount: {test_amount} wei")
+                        result = token_vault_contract.functions.deposit(test_amount, self.account.address).call({'from': self.account.address})
+                        logger.info(f"Smaller deposit call succeeded with result: {result}")
+                        logger.info("Will proceed with original amount in actual transaction")
+                    except Exception as test_error:
+                        logger.error(f"Even smaller deposit test failed: {test_error}")
+                        logger.error("Deposit operation likely to fail - protocol may have restrictions")
+                        # We'll still try but with high chance of failure
+                
+                # Proceed with transaction regardless of call check (it might still work)
+                deposit_tx = token_vault_contract.functions.deposit(amount_wei, self.account.address)
+                
+                # Get a new nonce
+                nonce = self.w3.eth.get_transaction_count(self.account.address, "pending")
+                
+                # Calculate gas parameters
+                latest_block = self.w3.eth.get_block('latest')
+                base_fee = latest_block.get('baseFeePerGas', 0)
+                priority_fee = self.w3.eth.max_priority_fee
+                max_fee = base_fee * 2 + priority_fee
+                
+                # Set higher gas limit for safety
+                gas_limit = 500000  # Higher limit as we've had issues
+                
+                # Build transaction
+                deposit_tx_data = deposit_tx.build_transaction({
+                    'from': self.account.address,
+                    'nonce': nonce,
+                    'gas': gas_limit,
+                    'maxFeePerGas': max_fee,
+                    'maxPriorityFeePerGas': priority_fee,
+                    'chainId': int(self.w3.eth.chain_id)
+                })
+                
+                # Sign and send transaction
+                signed_tx = self.account.sign_transaction(deposit_tx_data)
+                tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+                deposit_hash = tx_hash.hex()
+                
+                logger.info(f"Deposit transaction sent: {deposit_hash}")
+                logger.info("Waiting for deposit transaction confirmation...")
+                
+                # Wait for confirmation
+                receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
+                
+                if receipt.status == 1:
+                    logger.info(f"Deposit transaction successful, used gas: {receipt.gasUsed}")
+                    return deposit_hash
+                else:
+                    logger.error(f"Deposit transaction failed, receipt status: {receipt.status}")
+                    return None
+                
+            except Exception as e:
+                logger.error(f"Error during deposit process: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
                 return None
 
         except Exception as e:
-            logger.error(f"Error in supply operation: {e}")
+            logger.error(f"Error supplying {token} to Fluid: {e}")
             import traceback
-
             logger.error(traceback.format_exc())
             return None
 
     def withdraw(self, token: str, amount: float) -> str:
         """
-        Withdraw tokens from Fluid using DSA
+        Withdraw tokens from Fluid protocol using redeem method
 
         Args:
             token: Token symbol (e.g. 'USDC')
-            amount: Amount to withdraw
+            amount: Amount to withdraw (in base tokens, not shares)
 
         Returns:
             Transaction hash if successful, None otherwise
         """
         try:
-            # Check if DSA is available
-            if not self.dsa_manager or not self.dsa_connector:
-                logger.error("DSA not initialized, cannot proceed with withdrawal")
-                logger.error("Fluid protocol requires DSA for interaction")
-                return None
+            token_address = get_token_address(token, self.network)
 
-            # Get token address
-            token_address = self.get_token_address(token)
-
-            # Get current balance
-            balance = self.get_balance(token)
-
-            if balance < amount:
-                logger.error(
-                    f"Insufficient {token} balance in Fluid: {balance}, needed: {amount}"
-                )
-                return None
-
-            # Get token contract
-            token_contract = self._get_token_contract(token)
-
-            # Get decimals
+            # Получаем контракты
+            vault_token_contract = self.contract if token.upper() == "USDC" else self._load_contract()
+            token_contract = self.w3.eth.contract(address=token_address, abi=json.load(open(ABI_DIR / "ERC20.json")))
+            
+            # Получаем десятичные знаки
             decimals = token_contract.functions.decimals().call()
-
-            # Convert amount to wei
+            vault_decimals = vault_token_contract.functions.decimals().call()
+            
+            # Конвертируем сумму в wei
             amount_wei = int(amount * 10**decimals)
-
-            # Withdraw from Fluid through DSA
-            tx_hash = self.dsa_connector.withdraw_from_fluid(token_address, amount_wei)
-
+            
+            # Получаем текущий баланс в vault
+            current_balance = self.get_balance(token)
+            if current_balance < amount:
+                logger.error(f"Insufficient {token} balance in Fluid: {current_balance}, needed: {amount}")
+                return None
+            
+            # Проверяем общий баланс vault токенов (fTokens)
+            vault_balance_wei = vault_token_contract.functions.balanceOf(self.account.address).call()
+            
+            # Расчитываем примерное количество shares для вывода заданной суммы
+            try:
+                # Используем convertToShares, если такая функция есть
+                shares_to_redeem = vault_token_contract.functions.convertToShares(amount_wei).call()
+                logger.info(f"Using convertToShares: {shares_to_redeem} shares for {amount_wei} tokens")
+            except Exception:
+                # Если функции нет, используем соотношение
+                try:
+                    price_per_share = vault_token_contract.functions.convertToAssets(10**vault_decimals).call() / 10**decimals
+                    shares_to_redeem = int(amount_wei / price_per_share)
+                    logger.info(f"Calculated shares: {shares_to_redeem} for {amount_wei} tokens")
+                except Exception:
+                    # Если и это не работает, просто используем имеющиеся shares
+                    shares_to_redeem = vault_balance_wei
+                    logger.info(f"Using all available shares: {shares_to_redeem}")
+            
+            # Убедимся, что не выводим больше, чем есть
+            if shares_to_redeem > vault_balance_wei:
+                shares_to_redeem = vault_balance_wei
+                logger.info(f"Adjusted shares to redeem to maximum available: {shares_to_redeem}")
+            
+            logger.info(f"Withdrawing {amount} {token} (approx. {shares_to_redeem/(10**vault_decimals)} shares)")
+            
+            # Выполняем redeem для вывода средств
+            try:
+                # Пробуем стандартный метод redeem
+                redeem_tx = vault_token_contract.functions.redeem(
+                    shares_to_redeem, 
+                    self.account.address,  # receiver
+                    self.account.address   # owner
+                )
+                tx_hash = self._send_transaction_eip1559(redeem_tx)
+            except Exception as e:
+                logger.error(f"Error calling redeem: {e}")
+                # Пробуем метод withdraw
+                try:
+                    withdraw_tx = vault_token_contract.functions.withdraw(
+                        amount_wei,
+                        self.account.address,  # receiver
+                        self.account.address   # owner
+                    )
+                    tx_hash = self._send_transaction_eip1559(withdraw_tx)
+                except Exception as alt_e:
+                    logger.error(f"Error with withdraw method: {alt_e}")
+                    return None
+            
             if tx_hash:
-                logger.info(f"Withdrawal from Fluid successful: {tx_hash}")
+                logger.info(f"Successfully withdrew approx. {amount} {token} from Fluid: {tx_hash}")
                 return tx_hash
             else:
-                logger.error("Withdrawal from Fluid failed")
+                logger.error("Failed to withdraw tokens from Fluid")
                 return None
-
+                
         except Exception as e:
-            logger.error(f"Error in withdraw operation: {e}")
+            logger.error(f"Error withdrawing {token} from Fluid: {e}")
             import traceback
-
             logger.error(traceback.format_exc())
             return None
-
-    def get_token_address(self, token: str) -> str:
-        """
-        Get token address
-
-        Args:
-            token: Token symbol (e.g. 'USDC')
-
-        Returns:
-            Token address
-        """
-        # Try to get from STABLECOINS
-        token_upper = token.upper()
-        if token_upper in STABLECOINS and self.network in STABLECOINS[token_upper]:
-            return STABLECOINS[token_upper][self.network]
-
-        # Otherwise check TOKEN_ADDRESSES from constants
-        try:
-            from .constants.fluid_addresses import TOKEN_ADDRESSES
-
-            if token_upper in TOKEN_ADDRESSES[self.network]:
-                return TOKEN_ADDRESSES[self.network][token_upper]
-        except ImportError:
-            pass
-
-        raise ValueError(f"Token address not found for {token} on {self.network}")
 
 
 def get_protocol_operator(network: str, protocol: str, **kwargs):
@@ -2886,19 +3251,9 @@ def get_protocol_operator(network: str, protocol: str, **kwargs):
         return SiloOperator(network, market_id)
     elif protocol_lower == "compound-v3":
         return CompoundOperator(network, protocol_lower)
-    elif protocol_lower == "rho":
+    elif protocol_lower == "rho-markets":
         return RhoOperator(network, protocol_lower)
     elif protocol_lower == "fluid":
-        # Special warning for Fluid protocol since it requires special integration
-        logger.warning(
-            "⚠️ IMPORTANT: Fluid protocol requires specialized integration through DSA (DeFi Smart Account)"
-        )
-        logger.warning(
-            "Direct RPC calls to Fluid vaults will NOT work - See documentation for details"
-        )
-        logger.warning(
-            "Visit: https://docs.fluid.instadapp.io/integrate/understanding-fluid-key-concepts-and-practices.html"
-        )
         return FluidOperator(network, protocol_lower)
     else:
         supported = [
@@ -2910,7 +3265,7 @@ def get_protocol_operator(network: str, protocol: str, **kwargs):
             "uniswap-v3",
             "silo-v2",
             "compound-v3",
-            "rho",
+            "rho-markets",
             "fluid",
         ]
         raise ValueError(
@@ -2920,25 +3275,20 @@ def get_protocol_operator(network: str, protocol: str, **kwargs):
 
 def main():
     # Инициализация оператора
-    fluid = get_protocol_operator("Arbitrum", "fluid")
+    # aave = get_protocol_operator("Arbitrum", "aave-v3")
 
-    # Проверка баланса
-    usdc_balance = fluid.get_balance("USDC")
-    print(f"Current USDC balance in Fluid: {usdc_balance}")
+    recommendations = get_recommendations(chain="Scroll", same_asset_only=True)
 
-    # Депозит USDC
-    tx_hash = fluid.supply("USDC", 1)
-    if tx_hash:
-        print(f"USDC Deposit transaction hash: {tx_hash}")
-    else:
-        print(f"USDC Deposit failed. Check logs for details.")
+    print(format_recommendations(recommendations))
 
-    # Вывод USDC
-    tx_hash = fluid.withdraw("USDC", 0.5)
-    if tx_hash:
-        print(f"USDC Withdrawal transaction hash: {tx_hash}")
-    else:
-        print(f"USDC Withdrawal failed. Check logs for details.")
+    executor = RecommendationExecutor(recommendations[0])
+
+    # # Вывод USDC
+    # tx_hash = fluid.withdraw("USDC", 0.5)
+    # if tx_hash:
+    #     print(f"USDC Withdrawal transaction hash: {tx_hash}")
+    # else:
+    #     print(f"USDC Withdrawal failed. Check logs for details.")
 
 
 if __name__ == "__main__":

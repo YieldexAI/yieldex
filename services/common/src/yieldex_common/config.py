@@ -354,8 +354,8 @@ RHO_ADDRESSES = {
 # Корректировка адресов Fluid - используем адреса fToken (ERC4626)
 FLUID_ADDRESSES = {
     "Arbitrum": {
-        "USDC": "0x4CFA50B7Ce747e2D61724fcAc57f24B748FF2b2A",  # fUSDC token
-        "USDT": "0xC9FA90D24B7103Ad2215DE52afec5e1E4C7a6e62",  # fUSDT token
+        "USDC": "0x1A996cb54bb95462040408C06122D45D6Cdb6096",  # fUSDC token/Vault
+        "USDT": "0x4A03F37e7d3fC243e3f99341d36f4b829BEe5E03",  # fUSDT token/Vault
     }
 }
 
@@ -373,67 +373,3 @@ SUPPORTED_PROTOCOLS = {
 }
 
 YIELDEX_ORACLE_ABI = "YieldexOracle.sol"
-
-
-def supply(self, token: str, amount: float) -> str:
-    """
-    Supply tokens to the Fluid protocol using ERC4626 deposit method
-    """
-    try:
-        token_address = get_token_address(token, self.network)
-        amount_wei = self._convert_to_wei(token_address, amount)
-
-        # Get the Fluid vault contract
-        fluid_vault_contract = self._get_fluid_vault_contract(token)
-
-        # First approve tokens if needed
-        with open(ABI_DIR / "ERC20.json") as f:
-            erc20_contract = self.w3.eth.contract(
-                address=token_address, abi=json.load(f)
-            )
-
-        # Check allowance
-        allowance = erc20_contract.functions.allowance(
-            self.account.address, fluid_vault_contract.address
-        ).call()
-
-        if allowance < amount_wei:
-            approve_tx = erc20_contract.functions.approve(
-                fluid_vault_contract.address, amount_wei * 2
-            )
-            approve_hash = self._send_transaction(approve_tx)
-            logger.info(f"Approved {token} for Fluid: {approve_hash}")
-            time.sleep(3)  # Wait for approval to be mined
-
-        # Key difference: Fluid might have deposit limits we need to check
-        try:
-            # Check if we can deposit this amount
-            maxDeposit = fluid_vault_contract.functions.maxDeposit(
-                self.account.address
-            ).call()
-            logger.info(f"Max deposit allowed: {maxDeposit}")
-
-            if amount_wei > maxDeposit:
-                logger.warning(
-                    f"Amount exceeds max deposit limit. Reducing from {amount_wei} to {maxDeposit}"
-                )
-                amount_wei = maxDeposit
-
-            # Use the correct deposit function from ERC4626
-            deposit_tx = fluid_vault_contract.functions.deposit(
-                amount_wei, self.account.address
-            )
-
-            # Important: use the class method, not from config
-            return self._send_transaction(deposit_tx)
-
-        except Exception as e:
-            logger.error(f"Deposit transaction failed: {str(e)}")
-            return None
-
-    except Exception as e:
-        logger.error(f"Supply operation failed: {str(e)}")
-        import traceback
-
-        logger.error(traceback.format_exc())
-        return None

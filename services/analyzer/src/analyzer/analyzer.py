@@ -1,4 +1,3 @@
-
 from typing import Any, Dict, List, Optional, Tuple, Union
 import re
 from yieldex_common.config import SUPABASE_URL, SUPABASE_KEY
@@ -6,6 +5,7 @@ from yieldex_common.utils import get_token_address
 import os
 import logging
 from supabase import create_client
+import requests
 
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
@@ -1076,6 +1076,166 @@ def format_recommendations(recommendations: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def get_wallet_positions_alchemy(address: str, chain: Optional[str] = None) -> List[Dict]:
+    """
+    Получить позиции токенов для любого кошелька через Alchemy Portfolio API.
+    Args:
+        address: адрес кошелька
+        chain: фильтр по сети (eth-mainnet, base-mainnet, matic-mainnet и т.д.)
+    Returns:
+        Список позиций в формате [{'pool_id': ..., 'position_balance': ...}]
+    """
+    # Alchemy Portfolio API endpoint (замените на свой ключ и endpoint при необходимости)
+    alchemy_api_key = os.getenv("ALCHEMY_API_KEY")
+    url = f"https://api.g.alchemy.com/data/v1/{alchemy_api_key}/assets/tokens/by-address"
+    payload = {
+        "addresses": [
+            {
+                "address": address,
+                "networks": ["eth-mainnet", "base-mainnet", "matic-mainnet"] if not chain else [chain]
+            }
+        ],
+        "withMetadata": True,
+        "withPrices": True
+    }
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json"
+    }
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as e:
+        logger.error(f"Alchemy API error: {e}")
+        return []
+
+    positions = []
+    for token in data.get("data", {}).get("tokens", []):
+        # Определяем pool_id как <SYMBOL>_<CHAIN>_<PROTOCOL> если есть метаданные
+        symbol = token.get("tokenMetadata", {}).get("symbol") or token.get("tokenAddress") or "UNKNOWN"
+        network = token.get("network", "")
+        # Приводим к формату chain, используем только mainnet сети
+        chain_map = {
+            "eth-mainnet": "Ethereum",
+            "base-mainnet": "Base",
+            "matic-mainnet": "Polygon",
+        }
+        chain_name = chain_map.get(network, network)
+        # Баланс в читаемом формате
+        decimals = token.get("tokenMetadata", {}).get("decimals", 18)
+        raw_balance = token.get("tokenBalance", "0x0")
+        try:
+            balance = int(raw_balance, 16) / (10 ** decimals)
+        except Exception:
+            balance = 0
+        # Протокол определить невозможно, ставим unknown
+        pool_id = f"{symbol}_{chain_name}_unknown"
+        if balance > 0:
+            positions.append({"pool_id": pool_id, "position_balance": balance})
+    return positions
+
+
+def analyze_wallet_positions_alchemy(address: str, chain: Optional[str] = None, min_profit: float = 0.3, same_asset_only: bool = False, debug: bool = False) -> List[Dict]:
+    """
+    Анализировать позиции любого кошелька через Alchemy Portfolio API и вернуть рекомендации.
+    Args:
+        address: адрес кошелька
+        chain: фильтр по сети
+        min_profit: минимальный профит для рекомендации
+        same_asset_only: только те же активы
+        debug: режим отладки
+    Returns:
+        Список рекомендаций
+    """
+    if debug:
+        logger.setLevel(logging.DEBUG)
+        logging.getLogger("httpx").setLevel(logging.INFO)
+
+    positions = get_wallet_positions_alchemy(address, chain)
+    logger.info(f"Got {len(positions)} wallet positions from Alchemy: {positions}")
+    apy_map = get_latest_apy_data(chain)
+    if not positions:
+        logger.warning("No wallet positions found via Alchemy")
+        return []
+    # Копируем логику get_recommendations, но используем positions вместо get_current_positions
+    recommendations = []
+    for position in positions:
+        pool_id = position["pool_id"]
+        position_balance = position["position_balance"]
+        position_chain = extract_chain_from_pool_id(pool_id)
+        parts = pool_id.split("_")
+        asset = parts[0] if parts else None
+        from_protocol = extract_protocol_from_pool_id(pool_id)
+        from_protocol = normalize_protocol_name(from_protocol) if from_protocol else None
+        current_apy = None
+        matched_key = None
+        apy_keys_to_try = [
+            f"{asset}_{position_chain}",
+            f"{asset}_{position_chain}".lower(),
+            f"{asset.lower()}_{position_chain.lower()}" if asset else None,
+        ]
+        for key in [k for k in apy_keys_to_try if k]:
+            if key in apy_map:
+                current_apy = apy_map[key]["apy"]
+                matched_key = key
+                break
+        if current_apy is None:
+            logger.warning(f"No APY data found for wallet position with pool_id: {pool_id}")
+            continue
+        best_option = None
+        best_profit = 0
+        for key, data in apy_map.items():
+            if "market_" in key:
+                continue
+            pool_id_target = data.get("pool_id", "")
+            target_asset = data.get("asset")
+            target_chain = data.get("chain")
+            target_protocol = extract_protocol_from_pool_id(pool_id_target)
+            target_protocol = normalize_protocol_name(target_protocol) if target_protocol else None
+            if not target_asset or not target_chain or not target_protocol:
+                continue
+            if (
+                target_asset == asset
+                and target_chain == position_chain
+                and target_protocol == from_protocol
+            ):
+                continue
+            if chain and target_chain.lower() != chain.lower():
+                continue
+            if same_asset_only and target_asset != asset:
+                continue
+            target_apy = data["apy"]
+            gas_cost = 0.15 if target_chain != position_chain else 0.05
+            profit = target_apy - current_apy - gas_cost
+            if profit > min_profit and profit > best_profit:
+                best_profit = profit
+                best_option = {
+                    "asset": asset,
+                    "to_asset": target_asset,
+                    "from_chain": position_chain,
+                    "to_chain": target_chain,
+                    "from_protocol": from_protocol,
+                    "to_protocol": target_protocol,
+                    "current_apy": round(current_apy, 2),
+                    "target_apy": round(target_apy, 2),
+                    "gas_cost": gas_cost,
+                    "estimated_profit": round(profit, 2),
+                    "position_size": position_balance,
+                    "pool_id": data["pool_id"],
+                    "recommendation_type": "standard_transfer",
+                    "swap_details": {
+                        "from_token": asset,
+                        "to_token": target_asset,
+                        "swap_protocol": "curve" if position_chain == target_chain else "uniswap-v3",
+                    },
+                }
+        if best_option:
+            recommendations.append(best_option)
+    logger.info(f"Generated {len(recommendations)} wallet recommendations via Alchemy")
+    return recommendations
+
+
 if __name__ == "__main__":
     # Parse command line arguments
     import argparse
@@ -1113,6 +1273,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Suggest top entry pools when no positions are found",
     )
+    parser.add_argument(
+        "--wallet",
+        type=str,
+        help="Analyze recommendations for a specific wallet address using Alchemy API",
+    )
 
     args = parser.parse_args()
 
@@ -1136,81 +1301,94 @@ if __name__ == "__main__":
         logger.info(
             f"  - Suggest entry: Yes (will suggest top pools if no positions found)"
         )
+    if args.wallet:
+        logger.info(f"  - Wallet: {args.wallet} (Alchemy API mode)")
 
-    # Get recommendations
-    if args.show_all_comparisons:
-        recommendations, all_comparisons = get_recommendations(
-            min_profit=args.min_profit,
+    # Если указан --wallet, используем Alchemy API
+    if args.wallet:
+        recommendations = analyze_wallet_positions_alchemy(
+            address=args.wallet,
             chain=args.chain,
-            show_all_comparisons=True,
-            same_asset_only=args.same_asset_only,
-            suggest_entry=args.suggest_entry,
-        )
-    else:
-        recommendations = get_recommendations(
             min_profit=args.min_profit,
-            chain=args.chain,
             same_asset_only=args.same_asset_only,
-            suggest_entry=args.suggest_entry,
+            debug=args.debug,
         )
-
-    # Check if we got entry recommendations
-    if (
-        recommendations
-        and isinstance(recommendations, list)
-        and recommendations
-        and "recommendation_type" in recommendations[0]
-        and recommendations[0]["recommendation_type"] == "entry"
-    ):
-        print(format_entry_recommendations(recommendations))
-    else:
         print(format_recommendations(recommendations))
+    else:
+        # Get recommendations
+        if args.show_all_comparisons:
+            recommendations, all_comparisons = get_recommendations(
+                min_profit=args.min_profit,
+                chain=args.chain,
+                show_all_comparisons=True,
+                same_asset_only=args.same_asset_only,
+                suggest_entry=args.suggest_entry,
+            )
+        else:
+            recommendations = get_recommendations(
+                min_profit=args.min_profit,
+                chain=args.chain,
+                same_asset_only=args.same_asset_only,
+                suggest_entry=args.suggest_entry,
+            )
 
-    if args.show_all_comparisons:
-        print("\n\n======= ALL COMPARISONS (FOR DEBUGGING) =======")
-        for position in all_comparisons:
-            if position.get("market_id"):
-                print(
-                    f"\nPosition: {position['asset']} on {position['chain']} in Market {position['market_id']} (Current APY: {position['current_apy']}%)"
-                )
-            else:
-                print(
-                    f"\nPosition: {position['asset']} on {position['chain']} (Current APY: {position['current_apy']}%)"
-                )
+        # Check if we got entry recommendations
+        if (
+            recommendations
+            and isinstance(recommendations, list)
+            and recommendations
+            and "recommendation_type" in recommendations[0]
+            and recommendations[0]["recommendation_type"] == "entry"
+        ):
+            print(format_entry_recommendations(recommendations))
+        else:
+            print(format_recommendations(recommendations))
 
-            print(f"Pool ID: {position['pool_id']}")
-
-            if not position["comparisons"]:
-                print("  No comparisons made")
-                continue
-
-            print("  Comparisons:")
-            for i, comp in enumerate(
-                sorted(
-                    position["comparisons"], key=lambda x: x["profit"], reverse=True
-                ),
-                1,
-            ):
-                profit_status = (
-                    "PROFITABLE"
-                    if comp["profit"] > comp["min_profit_required"]
-                    else "not profitable"
-                )
-
-                # Handle different comparison types
-                if "from_market" in comp and "to_market" in comp:
+        if args.show_all_comparisons:
+            print("\n\n======= ALL COMPARISONS (FOR DEBUGGING) =======")
+            for position in all_comparisons:
+                if position.get("market_id"):
                     print(
-                        f"  {i}. Market {comp['from_market']} → Market {comp['to_market']} (same asset: {comp['from_asset']})"
+                        f"\nPosition: {position['asset']} on {position['chain']} in Market {position['market_id']} (Current APY: {position['current_apy']}%)"
                     )
                 else:
                     print(
-                        f"  {i}. {comp['from_asset']} ({comp['from_chain']}) → {comp['to_asset']} ({comp['to_chain']})"
+                        f"\nPosition: {position['asset']} on {position['chain']} (Current APY: {position['current_apy']}%)"
                     )
 
-                print(f"     From APY: {comp['from_apy']}% → To APY: {comp['to_apy']}%")
-                print(f"     Gas cost: {comp['gas_cost']}%")
-                print(f"     Profit: {comp['profit']:.2f}%")
-                print(
-                    f"     Status: {profit_status} (min required: {comp['min_profit_required']}%)"
-                )
-                print()
+                print(f"Pool ID: {position['pool_id']}")
+
+                if not position["comparisons"]:
+                    print("  No comparisons made")
+                    continue
+
+                print("  Comparisons:")
+                for i, comp in enumerate(
+                    sorted(
+                        position["comparisons"], key=lambda x: x["profit"], reverse=True
+                    ),
+                    1,
+                ):
+                    profit_status = (
+                        "PROFITABLE"
+                        if comp["profit"] > comp["min_profit_required"]
+                        else "not profitable"
+                    )
+
+                    # Handle different comparison types
+                    if "from_market" in comp and "to_market" in comp:
+                        print(
+                            f"  {i}. Market {comp['from_market']} → Market {comp['to_market']} (same asset: {comp['from_asset']})"
+                        )
+                    else:
+                        print(
+                            f"  {i}. {comp['from_asset']} ({comp['from_chain']}) → {comp['to_asset']} ({comp['to_chain']})"
+                        )
+
+                    print(f"     From APY: {comp['from_apy']}% → To APY: {comp['to_apy']}%")
+                    print(f"     Gas cost: {comp['gas_cost']}%")
+                    print(f"     Profit: {comp['profit']:.2f}%")
+                    print(
+                        f"     Status: {profit_status} (min required: {comp['min_profit_required']}%)"
+                    )
+                    print()
