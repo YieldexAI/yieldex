@@ -148,41 +148,41 @@ def validate_env_vars() -> bool:
     return True
 
 
-def get_white_lists() -> Dict[str, List[str]]:
+def get_filter_lists() -> Dict[str, Dict[str, List[str]]]:
     """
-    Get white lists for protocols and tokens from configuration.
+    Get all filter lists (white and black) from configuration.
 
     Returns:
-        dict: Dictionary with 'protocols' and 'tokens' lists
+        dict: Dictionary containing both white and black lists with their respective categories
+              {
+                  'white_list': {
+                      'protocols': List[str],
+                      'tokens': List[str]
+                  },
+                  'black_list': {
+                      'protocols': List[str]
+                  }
+              }
     """
     config_path = os.getenv("CONFIG_PATH")
     config = load_config(config_path)
 
-    white_lists = {"protocols": [], "tokens": []}
+    filter_lists = {
+        "white_list": {"protocols": [], "tokens": []},
+        "black_list": {"protocols": []}
+    }
 
-    if config and "white_list" in config:
-        if "protocols" in config["white_list"]:
-            white_lists["protocols"] = config["white_list"]["protocols"]
-        if "tokens" in config["white_list"]:
-            white_lists["tokens"] = config["white_list"]["tokens"]
+    if config:
+        # Process white lists
+        if "white_list" in config:
+            if "protocols" in config["white_list"]:
+                filter_lists["white_list"]["protocols"] = config["white_list"]["protocols"]
+            if "tokens" in config["white_list"]:
+                filter_lists["white_list"]["tokens"] = config["white_list"]["tokens"]
+        
+        # Process black lists
+        if "black_list" in config:
+            if "protocols" in config["black_list"]:
+                filter_lists["black_list"]["protocols"] = config["black_list"]["protocols"]
 
-    return white_lists
-
-
-def get_protocol_black_list() -> List[str]:
-    """
-    Get black lists for protocols
-
-    Returns:
-        list: List of protocols
-    """
-    config_path = os.getenv("CONFIG_PATH")
-    config = load_config(config_path)
-
-    black_list = []
-
-    if config and "black_list" in config:
-        if "protocols" in config["black_list"]:
-            black_list = config["black_list"]["protocols"]
-
-    return black_list
+    return filter_lists
