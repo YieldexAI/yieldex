@@ -2,6 +2,7 @@ import os
 import dotenv
 import yaml
 import logging
+from typing import List, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +148,7 @@ def validate_env_vars() -> bool:
     return True
 
 
-def get_white_lists():
+def get_white_lists() -> Dict[str, List[str]]:
     """
     Get white lists for protocols and tokens from configuration.
 
@@ -161,8 +162,27 @@ def get_white_lists():
 
     if config and "white_list" in config:
         if "protocols" in config["white_list"]:
-            white_lists["protocols"] = config["white_list"]["protocols"].split(",")
+            white_lists["protocols"] = config["white_list"]["protocols"]
         if "tokens" in config["white_list"]:
-            white_lists["tokens"] = config["white_list"]["tokens"].split(",")
+            white_lists["tokens"] = config["white_list"]["tokens"]
 
     return white_lists
+
+
+def get_protocol_black_list() -> List[str]:
+    """
+    Get black lists for protocols
+
+    Returns:
+        list: List of protocols
+    """
+    config_path = os.getenv("CONFIG_PATH")
+    config = load_config(config_path)
+
+    black_list = []
+
+    if config and "black_list" in config:
+        if "protocols" in config["black_list"]:
+            black_list = config["black_list"]["protocols"]
+
+    return black_list
